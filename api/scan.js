@@ -8,24 +8,21 @@ const GROQ_MODELS = [
   "meta-llama/llama-4-maverick-17b-128e-instruct",
 ];
 
-const PROMPT_BARS = `This is a zoomed crop of a Pokemon GO appraisal panel showing 3 IV bars labeled Ataque, Defensa, PS.
+const PROMPT_BARS = `This is a zoomed crop of a Pokemon GO appraisal panel with 3 bars: Ataque (top), Defensa (middle), PS (bottom).
 
-Each bar is divided into exactly 3 equal sections by small vertical gaps. Each section represents 5 IV points (section 1 = IVs 1-5, section 2 = IVs 6-10, section 3 = IVs 11-15).
+Each bar has exactly 3 sections separated by small gaps. Each section is either ORANGE (filled) or GREY (empty).
 
-For each bar, count how many sections are filled with ORANGE/AMBER color. A section is either fully filled (orange) or empty (grey). Also note if the last filled section is only partially filled.
+For each bar, answer whether each section contains orange color (true) or is grey (false):
 
-Return the count as a number where .5 means a section is partially filled:
-  0   = no orange at all (0 IVs)
-  0.5 = first section partially filled (~2 IVs)
-  1   = 1 section fully filled (5 IVs)
-  1.5 = 1 full + next partially filled (~7 IVs)
-  2   = 2 sections fully filled (10 IVs)
-  2.5 = 2 full + next partially filled (~12 IVs)
-  3   = all 3 sections filled (15 IVs)
+Return ONLY this JSON:
+{
+  "atk": [bool, bool, bool],
+  "def": [bool, bool, bool],
+  "sta": [bool, bool, bool]
+}
 
-Each bar is INDEPENDENT — look at each one carefully and separately.
-
-Return ONLY: {"atk_sections": N, "def_sections": N, "sta_sections": N}  where N is one of: 0, 0.5, 1, 1.5, 2, 2.5, 3`;
+Where each array is [section1_has_orange, section2_has_orange, section3_has_orange] from left to right.
+Be precise — grey sections must be false even if adjacent to orange ones.`;
 const PROMPT_WEATHER = `This is a zoomed grayscale crop of a Pokemon GO wild encounter banner showing the Pokemon name and CP number.
 
 Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail pointing down) inside it. This circle appears directly above the last digit of the CP number.

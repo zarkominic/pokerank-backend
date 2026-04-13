@@ -473,7 +473,7 @@ async function handlePhoto(input){
       readAndCompress(file),
       cropIVPanel(file)
     ]);
-    prev.src=compressed;
+    prev.src=ivCrop; // show crop so user can verify
     prev.style.display='block';
     lbl.textContent=t('scan.change');
     const b64=compressed.split(',')[1];
@@ -495,13 +495,14 @@ async function handlePhoto(input){
       document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
       document.getElementById('stars-row').style.display='flex';
     }
-    // IV bars from crop: sections * 5 = IV value
+    // IV bars from crop: count true booleans * 5 = IV value
     if(barsRes.ok){
       const bd=await barsRes.json();
-      const toIV=s=>Math.min(15,Math.max(0,Math.round(Number(s)*5)));
-      if(bd.atk_sections!=null)setSlider('atk',toIV(bd.atk_sections));
-      if(bd.def_sections!=null)setSlider('def',toIV(bd.def_sections));
-      if(bd.sta_sections!=null)setSlider('sta',toIV(bd.sta_sections));
+      const toIV=arr=>Array.isArray(arr)?arr.filter(Boolean).length*5:null;
+      const a=toIV(bd.atk),d=toIV(bd.def),s=toIV(bd.sta);
+      if(a!=null)setSlider('atk',a);
+      if(d!=null)setSlider('def',d);
+      if(s!=null)setSlider('sta',s);
     }
     // Auto evaluate
     setTimeout(evaluate,400);
