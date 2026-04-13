@@ -495,14 +495,13 @@ async function handlePhoto(input){
       document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
       document.getElementById('stars-row').style.display='flex';
     }
-    // IV bars from crop: count true booleans * 5 = IV value
+    // IV bars from crop: direct 0-15 values
     if(barsRes.ok){
       const bd=await barsRes.json();
-      const toIV=arr=>Array.isArray(arr)?arr.filter(Boolean).length*5:null;
-      const a=toIV(bd.atk),d=toIV(bd.def),s=toIV(bd.sta);
-      if(a!=null)setSlider('atk',a);
-      if(d!=null)setSlider('def',d);
-      if(s!=null)setSlider('sta',s);
+      const clamp=v=>Math.min(15,Math.max(0,Math.round(Number(v))));
+      if(bd.atk_iv!=null)setSlider('atk',clamp(bd.atk_iv));
+      if(bd.def_iv!=null)setSlider('def',clamp(bd.def_iv));
+      if(bd.sta_iv!=null)setSlider('sta',clamp(bd.sta_iv));
     }
     // Auto evaluate
     setTimeout(evaluate,400);
