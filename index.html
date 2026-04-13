@@ -559,20 +559,24 @@ async function handleCatchPhoto(input){
   loading.style.display='none';
 }
 
-// Crop and zoom the IV bar panel (lower 50-85% of appraisal screen)
+// Crop and zoom the IV bar panel — bottom-left quadrant of appraisal screen
 function cropIVPanel(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=ev=>{
       const img=new Image();
       img.onload=()=>{
-        const sy=Math.floor(img.height*0.50);
-        const sh=Math.floor(img.height*0.38);
+        // Bars are in the bottom-left: x 0-55%, y 48-88%
+        const sx=0;
+        const sy=Math.floor(img.height*0.48);
+        const sw=Math.floor(img.width*0.55);
+        const sh=Math.floor(img.height*0.40);
+        // Scale up 4x
         const canvas=document.createElement('canvas');
-        canvas.width=img.width*2;
-        canvas.height=sh*3;
+        canvas.width=sw*4;
+        canvas.height=sh*4;
         const ctx=canvas.getContext('2d');
-        ctx.drawImage(img,0,sy,img.width,sh,0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
         resolve(canvas.toDataURL('image/jpeg',0.92));
       };
       img.onerror=reject;
