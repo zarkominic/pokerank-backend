@@ -40,14 +40,21 @@ STEP 2 - cp: read the large number next to "PC" or "CP" at the top. Return as in
 STEP 3 - stars: find the circular appraisal badge/medal. Count ONLY the SOLID FILLED gold stars (ignore hollow/grey stars). Return 0, 1, 2, or 3.
 
 STEP 4 - IV bars: find the 3 horizontal bars labeled Ataque/Attack, Defensa/Defense, PS/Stamina in the appraisal panel.
-Each bar is divided into exactly 3 equal sections by small gaps.
-Count how many sections are FILLED (orange/amber color) vs EMPTY (light grey).
-Return the count of filled sections as an integer: 0, 1, 2, or 3 for each bar.
-IMPORTANT: examine each bar independently — they will likely have different values.
+Each bar fills from left to right with orange/amber color. Two small gap marks divide it into 3 equal thirds.
+Each third represents exactly 5 IVs. Estimate where the orange fill ends:
+  - Bar empty = 0
+  - Orange just started in 1st third = 1-4
+  - Orange exactly at 1st gap mark = 5
+  - Orange halfway through 2nd third = 7-8
+  - Orange exactly at 2nd gap mark = 10
+  - Orange deep in 3rd third = 13-14
+  - Bar completely full = 15
+Return the estimated IV as an integer 0-15 for each bar.
+CRITICAL: examine each bar independently. Do NOT assume they are equal.
 
 STEP 5 - is_encounter: false if owned Pokemon, true if wild encounter.
 
-Return a JSON object with keys: pokemon, cp, stars, atk_sections, def_sections, sta_sections, is_encounter.`;
+Return a JSON object with keys: pokemon, cp, stars, atk_iv, def_iv, sta_iv, is_encounter.`;
 
 function extractJSON(txt) {
   const cleaned = txt
