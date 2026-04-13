@@ -554,22 +554,22 @@ async function handleCatchPhoto(input){
   loading.style.display='none';
 }
 
-// Crop and zoom the IV bar panel — bottom portion, full width to avoid missing bars
+// Crop just the IV bar rows — tight crop on left panel, bar area only
 function cropIVPanel(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=ev=>{
       const img=new Image();
       img.onload=()=>{
-        // Bars popup appears in lower portion at full width
+        // Left 50% of image (panel only), bottom 30% (bar rows only)
         const sx=0;
-        const sy=Math.floor(img.height*0.52);
-        const sw=img.width;
-        const sh=Math.floor(img.height*0.38);
-        // Scale up 3x
+        const sy=Math.floor(img.height*0.62);
+        const sw=Math.floor(img.width*0.52);
+        const sh=Math.floor(img.height*0.28);
+        // Scale up 5x so each bar is large
         const canvas=document.createElement('canvas');
-        canvas.width=sw*3;
-        canvas.height=sh*3;
+        canvas.width=sw*5;
+        canvas.height=sh*5;
         const ctx=canvas.getContext('2d');
         ctx.drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
         resolve(canvas.toDataURL('image/jpeg',0.92));
