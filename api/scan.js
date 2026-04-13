@@ -1,6 +1,5 @@
 const MODELS = [
   "gemini-2.5-flash",
-  "gemini-2.5-flash-8b",
   "gemini-2.5-pro",
 ];
 
@@ -32,7 +31,7 @@ function extractJSON(txt) {
     .trim();
   const m = cleaned.match(/\{[\s\S]*\}/);
   if (m) return JSON.parse(m[0]);
-  throw new Error("No JSON in response");
+  throw new Error(`No JSON in response: "${txt.slice(0, 200)}"`);
 }
 
 // Round-robin counter shared across warm instances
@@ -72,6 +71,9 @@ async function callGemini(model, image, mediaType, apiKey) {
           maxOutputTokens: 300,
           temperature: 0,
           responseMimeType: "application/json"
+        },
+        thinkingConfig: {
+          thinkingBudget: 0
         }
       })
     }
@@ -96,7 +98,9 @@ async function callGemini(model, image, mediaType, apiKey) {
     throw err;
   }
 
+  // Filter out thinking parts (gemini-2.5 models include internal reasoning)
   const txt = (data.candidates?.[0]?.content?.parts || [])
+    .filter(p => !p.thought)
     .map(p => p.text || "").join("").trim();
 
   return extractJSON(txt);
