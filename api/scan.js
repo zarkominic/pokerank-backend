@@ -14,7 +14,7 @@ STEP 1 - pokemon: read the Pokemon name shown in the dark banner in the center o
 
 STEP 2 - cp: read the number next to "PC" or "CP" shown in that same banner. Return as integer only.
 
-STEP 3 - weather_boosted: look DIRECTLY ABOVE the CP number (the "PC XXXX" text) in the image. If there is a small grey circle with any symbol inside it floating just above the CP, return true. If there is nothing above the CP number, return false.
+STEP 3 - weather_boosted: look at the banner showing the Pokemon name and CP (e.g. "Starly / PC 502"). Between the Pokemon name and the CP number there may be a small icon (a small square or circle with a symbol like a kite, wind, sun, or arrow). If you see any small icon or symbol between the name and the CP, return true. If the banner shows only the name and CP with nothing between them, return false.
 
 Return a JSON object with keys: pokemon, cp, weather_boosted.`;
 
