@@ -55,29 +55,45 @@ function nextKey(keys) {
 }
 
 async function callGemini(model, image, mediaType, apiKey) {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: mediaType || "image/jpeg", data: image } },
-            { text: PROMPT }
-          ]
-        }],
-        generationConfig: {
-          maxOutputTokens: 300,
-          temperature: 0,
-          responseMimeType: "application/json"
-        },
-        thinkingConfig: {
-          thinkingBudget: 0
-        }
-      })
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000); // 7s max per attempt
+
+  let response;
+  try {
+    response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { inline_data: { mime_type: mediaType || "image/jpeg", data: image } },
+              { text: PROMPT }
+            ]
+          }],
+          generationConfig: {
+            maxOutputTokens: 300,
+            temperature: 0,
+            responseMimeType: "application/json"
+          },
+          thinkingConfig: {
+            thinkingBudget: 0
+          }
+        })
+      }
+    );
+  } catch (err) {
+    if (err.name === "AbortError") {
+      const e = new Error("Request timed out after 7s");
+      e.isOverload = true;
+      throw e;
     }
-  );
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   const data = await response.json();
 
@@ -128,8 +144,8 @@ module.exports = async function handler(req, res) {
     const errors = [];
 
     for (const model of MODELS) {
-      // Try each model — on overload rotate through all keys before giving up
-      for (let attempt = 1; attempt <= keys.length * 2; attempt++) {
+      // Try each key once per model (no sleep — 7s timeout per attempt, 2 models, 3 keys = ~42s max but Vercel is 30s)
+      for (let attempt = 0; attempt < keys.length; attempt++) {
         const apiKey = nextKey(keys);
         try {
           const result = await callGemini(model, image, mediaType, apiKey);
@@ -137,12 +153,7 @@ module.exports = async function handler(req, res) {
         } catch (err) {
           errors.push(`[${model}] ${err.message}`);
           if (err.isUnavailable) break; // Skip to next model immediately
-          if (err.isOverload) {
-            // Brief pause between key rotations, longer after full cycle
-            const fullCycle = attempt % keys.length === 0;
-            if (fullCycle && attempt < keys.length * 2) await sleep(1500);
-            continue;
-          }
+          if (err.isOverload) continue;  // Try next key immediately
           break; // Non-retriable error, try next model
         }
       }
