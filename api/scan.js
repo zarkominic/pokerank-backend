@@ -12,6 +12,7 @@ const PROMPT_BAR_SINGLE = `This image shows a single horizontal bar from a Pokem
 The bar has 3 equal sections separated by small gaps.
 Count how many of the 3 sections are NOT light grey (i.e. contain any color at all).
 Return ONLY a JSON with a single number: {"sections": N} where N is 0, 1, 2, or 3.`;
+
 const PROMPT_WEATHER = `This is a zoomed grayscale crop of a Pokemon GO wild encounter banner showing the Pokemon name and CP number.
 
 Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail pointing down) inside it. This circle appears directly above the last digit of the CP number.
@@ -200,7 +201,10 @@ module.exports = async function handler(req, res) {
     const { image, mediaType, mode } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    const prompt = mode === "bar_single" ? PROMPT_BAR_SINGLE : mode === "weather" ? PROMPT_WEATHER : mode === "wild" ? PROMPT_WILD : PROMPT;
+    const prompt = mode === "bar_single" ? PROMPT_BAR_SINGLE
+      : mode === "weather" ? PROMPT_WEATHER
+      : mode === "wild" ? PROMPT_WILD
+      : PROMPT;
 
     const geminiKeys = getKeys("GEMINI_API_KEY");
     const groqKeys = getKeys("GROQ_API_KEY");
