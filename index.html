@@ -160,7 +160,7 @@ input[type=range]{width:100%;accent-color:#EF4444}
       </div>
     </div>
     <div class="label" data-i18n="catch.search.label">BÚSQUEDA RÁPIDA</div>
-    <input type="text" id="catch-search" placeholder="Buscar Pokémon..." oninput="renderWild()" style="margin-bottom:10px"/>
+    <input type="text" id="catch-search" placeholder="Buscar Pokémon..." oninput="wildCP=null;renderWild()" style="margin-bottom:10px"/>
     <div id="wild-list"></div>
   </div>
 
@@ -374,6 +374,7 @@ const WILD=[
 let selectedKey=null;
 let manualA=15,manualD=15,manualS=15;
 let weatherOn=false;
+let wildCP=null;
 let myBox=[];
 
 // ═══ INIT ═══
@@ -506,6 +507,7 @@ async function handleCatchPhoto(input){
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'wild'})});
     const data=await res.json();
     if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
+    if(data.cp) wildCP=data.cp;
     if(data.pokemon){
       document.getElementById('catch-search').value=data.pokemon;
       renderWild();
@@ -693,7 +695,7 @@ function renderWild(){
     return`<div class="catch-card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <span style="font-size:28px">${p.e}</span>
-        <div style="flex:1"><div style="font-weight:800;font-size:14px">${p.n}</div>
+        <div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-weight:800;font-size:14px">${p.n}</span>${wildCP&&filtered.length===1?`<span style="font-family:ui-monospace,monospace;font-size:12px;font-weight:700;color:#7C3AED;background:#F5F3FF;padding:2px 7px;border-radius:8px">PC ${wildCP}</span>`:''}${weatherOn?`<span style="font-size:10px">🌤️</span>`:''}</div>
         <div style="display:flex;gap:3px;margin-top:2px">${p.t.map(t=>`<span class="badge" style="background:${TC[t]}">${t.toUpperCase()}</span>`).join('')}<span class="badge" style="background:${rareColor}">${p.rare}</span></div></div>
       </div>
       <div class="verdict-box" style="background:${p.col}15;border:1px solid ${p.col}30"><span style="font-size:12px;font-weight:700;color:${p.col}">${p.verdict}</span></div>
