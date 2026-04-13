@@ -14,7 +14,7 @@ STEP 1 - pokemon: read the Pokemon name shown in the dark banner in the center o
 
 STEP 2 - cp: read the number next to "PC" or "CP" shown in that same banner. Return as integer only.
 
-STEP 3 - weather_boosted: look at the dark banner showing the Pokemon name and CP. To the LEFT of the Pokemon name there is always a standard Pokeball circle icon. If the Pokemon is weather boosted, there is an ADDITIONAL small grey circle (with a symbol inside) appearing separately — either above the CP number or near the banner. If you see this extra grey circle badge (not the standard Pokeball), return true. If you only see the standard Pokeball circle and nothing else, return false.
+STEP 3 - weather_boosted: look DIRECTLY ABOVE the CP number (the "PC XXXX" text) in the image. If there is a small grey circle with any symbol inside it floating just above the CP, return true. If there is nothing above the CP number, return false.
 
 Return a JSON object with keys: pokemon, cp, weather_boosted.`;
 
