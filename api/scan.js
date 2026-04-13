@@ -1,9 +1,6 @@
 const GEMINI_MODELS = [
-  "gemini-2.0-flash",
   "gemini-2.5-flash",
-  "gemini-1.5-flash",
   "gemini-2.5-pro",
-  "gemini-1.5-pro",
 ];
 
 const GROQ_MODELS = [
@@ -144,9 +141,10 @@ async function callGemini(model, image, mediaType, apiKey, prompt) {
     throw err;
   }
 
-  const txt = (data.candidates?.[0]?.content?.parts || [])
-    .filter(p => !p.thought)
-    .map(p => p.text || "").join("").trim();
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  // Non-thought parts first; if empty (model output all thinking), fall back to all parts
+  let txt = parts.filter(p => !p.thought).map(p => p.text || "").join("").trim();
+  if (!txt) txt = parts.map(p => p.text || "").join("").trim();
 
   return extractJSON(txt);
 }
