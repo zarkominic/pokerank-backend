@@ -469,17 +469,11 @@ async function handlePhoto(input){
   loading.style.display='block';
 
   try{
-    const [compressed, atkIV, defIV, staIV] = await Promise.all([
-      readAndCompress(file),
-      analyzeBarPixels(file, 0),
-      analyzeBarPixels(file, 1),
-      analyzeBarPixels(file, 2)
-    ]);
+    const compressed=await readAndCompress(file);
     prev.src=compressed;
     prev.style.display='block';
     lbl.textContent=t('scan.change');
     const b64=compressed.split(',')[1];
-    // Single API call for name/cp/stars only
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'appraisal'})});
     const data=await res.json();
     if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
@@ -493,10 +487,11 @@ async function handlePhoto(input){
       document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
       document.getElementById('stars-row').style.display='flex';
     }
-    // IV bars from local pixel analysis: sections * 5
-    setSlider('atk',atkIV);
-    setSlider('def',defIV);
-    setSlider('sta',staIV);
+    // IV bars: API returns sections filled (0-3), multiply by 5 → IV (0/5/10/15)
+    const clampSec=v=>Math.min(3,Math.max(0,Math.round(Number(v))));
+    if(data.atk_sections!=null)setSlider('atk',clampSec(data.atk_sections)*5);
+    if(data.def_sections!=null)setSlider('def',clampSec(data.def_sections)*5);
+    if(data.sta_sections!=null)setSlider('sta',clampSec(data.sta_sections)*5);
     // Auto evaluate
     setTimeout(evaluate,400);
   }catch(e){
@@ -547,55 +542,6 @@ async function handleCatchPhoto(input){
   loading.style.display='none';
 }
 
-// Analyze a single IV bar row using pixel saturation — no API call needed.
-// barIndex: 0=ATK, 1=DEF, 2=STA. Returns IV value: 0, 5, 10, or 15.
-// Filled sections are orange/amber (high saturation); empty sections are light grey (saturation ≈ 0).
-function analyzeBarPixels(file, barIndex){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      const img=new Image();
-      img.onload=()=>{
-        // Bar positions within the appraisal panel (left 50% of screen)
-        const tops=[0.66, 0.74, 0.82]; // ATK, DEF, STA top edge as fraction of image height
-        const sy=Math.floor(img.height*tops[barIndex]);
-        const sh=Math.floor(img.height*0.07);
-        const sw=Math.floor(img.width*0.50);
-        const canvas=document.createElement('canvas');
-        canvas.width=sw; canvas.height=sh;
-        const ctx=canvas.getContext('2d');
-        ctx.drawImage(img,0,sy,sw,sh,0,0,sw,sh);
-        const px=ctx.getImageData(0,0,sw,sh).data;
-        const secW=Math.floor(sw/3);
-        // Skip outer 15% height (border/shadow) and 3px side gap between sections
-        const yStart=Math.floor(sh*0.15), yEnd=Math.floor(sh*0.85);
-        let filled=0;
-        for(let s=0;s<3;s++){
-          const x0=s*secW+3, x1=Math.min((s+1)*secW-3, sw);
-          let colorPx=0, total=0;
-          for(let y=yStart;y<yEnd;y++){
-            for(let x=x0;x<x1;x++){
-              const i=(y*sw+x)*4;
-              const r=px[i],g=px[i+1],b=px[i+2];
-              const max=Math.max(r,g,b), min=Math.min(r,g,b);
-              // Saturation: 0 = pure grey, 1 = fully saturated color
-              const sat=max<30?0:(max-min)/max;
-              if(sat>0.20 && max>80) colorPx++;
-              total++;
-            }
-          }
-          // Section is filled if >20% of its pixels are colored
-          if(total>0 && colorPx/total>0.20) filled++;
-        }
-        resolve(filled*5); // 0, 5, 10, or 15
-      };
-      img.onerror=reject;
-      img.src=ev.target.result;
-    };
-    reader.onerror=reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 // Crop and zoom the banner area (top 20-50% of image) where name/CP lives
 function cropBanner(file){

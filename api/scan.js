@@ -37,11 +37,15 @@ STEP 2 - cp: read the large number next to "PC" or "CP" at the top. Return as in
 
 STEP 3 - stars: find the circular appraisal badge/medal. Count ONLY the SOLID FILLED gold stars (ignore hollow/grey stars). Return 0, 1, 2, or 3.
 
-STEP 4 - is_encounter: false if owned Pokemon, true if wild encounter.
+STEP 4 - IV bars: find the 3 horizontal bars labeled Ataque/Attack, Defensa/Defense, PS/Stamina in the appraisal panel.
+Each bar is divided into exactly 3 equal sections by small gaps.
+Count how many sections are FILLED (orange/amber color) vs EMPTY (light grey).
+Return the count of filled sections as an integer: 0, 1, 2, or 3 for each bar.
+IMPORTANT: examine each bar independently — they will likely have different values.
 
-STEP 5 - weather_boosted: in wild encounter screens, look for a small CIRCULAR ICON with a visible ring/border displayed near the CP number (usually to the left or above it). This circle contains a weather symbol inside and indicates weather boost. If you see this circular bordered icon near the CP, return true. If there is no such circle, return false.
+STEP 5 - is_encounter: false if owned Pokemon, true if wild encounter.
 
-Return a JSON object with keys: pokemon, cp, stars, is_encounter, weather_boosted.`;
+Return a JSON object with keys: pokemon, cp, stars, atk_sections, def_sections, sta_sections, is_encounter.`;
 
 function extractJSON(txt) {
   const cleaned = txt
