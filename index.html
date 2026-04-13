@@ -496,18 +496,12 @@ async function handlePhoto(input){
       document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
       document.getElementById('stars-row').style.display='flex';
     }
-    // Apply IV bars from zoomed crop
-    const BAR_IV={empty:0,low:3,mid:8,high:12,full:15};
+    // Apply IV bars from zoomed crop (returns 0-15 integers directly)
     if(barsRes.ok){
       const bd=await barsRes.json();
-      if(bd.atk_bar&&BAR_IV[bd.atk_bar]!==undefined)setSlider('atk',BAR_IV[bd.atk_bar]);
-      if(bd.def_bar&&BAR_IV[bd.def_bar]!==undefined)setSlider('def',BAR_IV[bd.def_bar]);
-      if(bd.sta_bar&&BAR_IV[bd.sta_bar]!==undefined)setSlider('sta',BAR_IV[bd.sta_bar]);
-    } else {
-      // Fallback to bars from main scan if crop call failed
-      if(data.atk_bar&&BAR_IV[data.atk_bar]!==undefined)setSlider('atk',BAR_IV[data.atk_bar]);
-      if(data.def_bar&&BAR_IV[data.def_bar]!==undefined)setSlider('def',BAR_IV[data.def_bar]);
-      if(data.sta_bar&&BAR_IV[data.sta_bar]!==undefined)setSlider('sta',BAR_IV[data.sta_bar]);
+      if(bd.atk_iv!=null)setSlider('atk',Math.min(15,Math.max(0,Math.round(bd.atk_iv))));
+      if(bd.def_iv!=null)setSlider('def',Math.min(15,Math.max(0,Math.round(bd.def_iv))));
+      if(bd.sta_iv!=null)setSlider('sta',Math.min(15,Math.max(0,Math.round(bd.sta_iv))));
     }
     // Auto evaluate
     setTimeout(evaluate,400);
@@ -559,22 +553,22 @@ async function handleCatchPhoto(input){
   loading.style.display='none';
 }
 
-// Crop and zoom the IV bar panel — bottom-left quadrant of appraisal screen
+// Crop and zoom the IV bar panel — bottom portion, full width to avoid missing bars
 function cropIVPanel(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=ev=>{
       const img=new Image();
       img.onload=()=>{
-        // Bars are in the bottom-left: x 0-55%, y 48-88%
+        // Bars popup appears in lower portion at full width
         const sx=0;
-        const sy=Math.floor(img.height*0.48);
-        const sw=Math.floor(img.width*0.55);
-        const sh=Math.floor(img.height*0.40);
-        // Scale up 4x
+        const sy=Math.floor(img.height*0.52);
+        const sw=img.width;
+        const sh=Math.floor(img.height*0.38);
+        // Scale up 3x
         const canvas=document.createElement('canvas');
-        canvas.width=sw*4;
-        canvas.height=sh*4;
+        canvas.width=sw*3;
+        canvas.height=sh*3;
         const ctx=canvas.getContext('2d');
         ctx.drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
         resolve(canvas.toDataURL('image/jpeg',0.92));

@@ -15,21 +15,13 @@ The panel has 3 horizontal bars in this order from top to bottom:
 2. Defense / Defensa
 3. Stamina / PS
 
-Each bar is a horizontal rectangle divided into exactly 4 equal segments separated by small gaps.
-FILLED segments are ORANGE or AMBER colored.
-EMPTY segments are LIGHT GREY.
+Each bar shows a colored (ORANGE/AMBER) fill on a grey background. The fill represents an IV value from 0 to 15.
 
-For each bar scan LEFT TO RIGHT and count the orange segments:
-  0 orange = "empty"
-  1 orange = "low"
-  2 orange = "mid"
-  3 orange = "high"
-  4 orange = "full"
+For each bar: imagine it divided into 15 equal parts. Count how many parts are filled with orange/amber color (0 = empty, 15 = completely full). Return an INTEGER between 0 and 15.
 
-Each bar has an INDEPENDENT value — do NOT assume they are the same.
+Each bar is INDEPENDENT — they will have DIFFERENT values. Look carefully at each one separately.
 
-Return ONLY: {"atk_bar": "...", "def_bar": "...", "sta_bar": "..."}`;
-
+Return ONLY: {"atk_iv": N, "def_iv": N, "sta_iv": N}  where N is an integer 0-15.`;
 const PROMPT_WEATHER = `This is a zoomed grayscale crop of a Pokemon GO wild encounter banner showing the Pokemon name and CP number.
 
 Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail pointing down) inside it. This circle appears directly above the last digit of the CP number.
