@@ -31,7 +31,10 @@ module.exports = async function handler(req, res) {
     });
 
     const data = await response.json();
-    if (!response.ok) return res.status(500).json({ error: data?.error?.message || data?.error || JSON.stringify(data) });
+    if (!response.ok) {
+      const msg = data?.error?.message || (typeof data?.error === 'string' ? data.error : JSON.stringify(data));
+      return res.status(500).json({ error: msg });
+    }
     const txt = (data.content || []).map(i => i.text || "").join("").trim();
     const m = txt.match(/\{[\s\S]*\}/);
     if (!m) return res.status(500).json({ error: "No JSON", raw: txt });
