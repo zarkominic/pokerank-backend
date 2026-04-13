@@ -12,14 +12,14 @@ STEP 2 - cp: read the large number next to "PC" or "CP" at the top. Return as in
 
 STEP 3 - stars: find the circular appraisal badge/medal. Count ONLY the SOLID FILLED gold stars (ignore hollow/grey stars). Return 0, 1, 2, or 3.
 
-STEP 4 - IV bars: find the appraisal panel with 3 horizontal orange bars labeled Attack/Ataque, Defense/Defensa, Stamina/PS. For EACH bar independently estimate the fill:
-  "empty" = 0% filled
-  "low"   = ~25% filled (about 1 of 4 segments)
-  "mid"   = ~50% filled (about 2 of 4 segments)
-  "high"  = ~75% filled (about 3 of 4 segments)
-  "full"  = 100% completely filled
+STEP 4 - IV bars: find the appraisal popup panel showing Attack/Ataque, Defense/Defensa, Stamina/PS bars. Each bar is divided into exactly 4 segments. Count the number of FILLED (orange/colored) segments for each bar:
+  0 filled segments = "empty"
+  1 filled segment  = "low"
+  2 filled segments = "mid"
+  3 filled segments = "high"
+  4 filled segments = "full"
 
-WARNING: Each bar has a DIFFERENT fill level. Examine each one individually.
+Count each bar INDEPENDENTLY — they WILL have different values. A short bar ≠ a long bar. Look carefully at each one.
 
 STEP 5 - is_encounter: false if owned Pokemon, true if wild encounter.
 
