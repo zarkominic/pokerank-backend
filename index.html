@@ -499,7 +499,7 @@ async function handleCatchPhoto(input){
   err.style.display='none';
   loading.style.display='block';
   try{
-    const compressed=await readAndCompress(file,false);
+    const compressed=await readAndCompress(file,true);
     prev.src=compressed;
     prev.style.display='block';
     lbl.textContent=t('catch.change');
