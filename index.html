@@ -435,7 +435,7 @@ async function handleCatchPhoto(input){
     prev.style.display='block';
     lbl.textContent=t('catch.change');
     const b64=compressed.split(',')[1];
-    const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
+    const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'wild'})});
     const data=await res.json();
     if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
     if(data.pokemon){

@@ -8,6 +8,16 @@ const GROQ_MODELS = [
   "meta-llama/llama-4-maverick-17b-128e-instruct",
 ];
 
+const PROMPT_WILD = `Analyze this Pokemon GO screenshot showing a wild Pokemon encounter screen.
+
+STEP 1 - pokemon: read the Pokemon name shown in the dark banner in the center of the screen (e.g. "Hoppip", "Pikachu", "Kyogre").
+
+STEP 2 - cp: read the number next to "PC" or "CP" shown in that same banner. Return as integer only.
+
+STEP 3 - weather_boosted: In the dark banner that shows the Pokemon name and CP, look to the LEFT of the Pokemon name. If there is a small circular icon (a circle with a border/ring, containing any symbol inside), the Pokemon IS weather boosted — return true. If there is no such circular icon to the left of the name, return false.
+
+Return a JSON object with keys: pokemon, cp, weather_boosted.`;
+
 const PROMPT = `Analyze this Pokemon GO screenshot showing a Pokemon's appraisal screen.
 
 STEP 1 - pokemon: read the Pokemon name shown below its image.
@@ -81,7 +91,7 @@ async function fetchWithTimeout(url, options, ms) {
   }
 }
 
-async function callGemini(model, image, mediaType, apiKey) {
+async function callGemini(model, image, mediaType, apiKey, prompt) {
   const response = await fetchWithTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
@@ -91,7 +101,7 @@ async function callGemini(model, image, mediaType, apiKey) {
         contents: [{
           parts: [
             { inline_data: { mime_type: mediaType || "image/jpeg", data: image } },
-            { text: PROMPT }
+            { text: prompt }
           ]
         }],
         generationConfig: {
@@ -131,7 +141,7 @@ async function callGemini(model, image, mediaType, apiKey) {
   return extractJSON(txt);
 }
 
-async function callGroq(model, image, mediaType, apiKey) {
+async function callGroq(model, image, mediaType, apiKey, prompt) {
   const response = await fetchWithTimeout(
     "https://api.groq.com/openai/v1/chat/completions",
     {
@@ -149,7 +159,7 @@ async function callGroq(model, image, mediaType, apiKey) {
               type: "image_url",
               image_url: { url: `data:${mediaType || "image/jpeg"};base64,${image}` }
             },
-            { type: "text", text: PROMPT }
+            { type: "text", text: prompt }
           ]
         }],
         response_format: { type: "json_object" },
@@ -190,8 +200,10 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(200).json({ status: "ok" });
 
   try {
-    const { image, mediaType } = req.body;
+    const { image, mediaType, mode } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
+
+    const prompt = mode === "wild" ? PROMPT_WILD : PROMPT;
 
     const geminiKeys = getKeys("GEMINI_API_KEY");
     const groqKeys = getKeys("GROQ_API_KEY");
@@ -207,7 +219,7 @@ module.exports = async function handler(req, res) {
       for (let i = 0; i < geminiKeys.length; i++) {
         const apiKey = nextKey(geminiKeys);
         try {
-          const result = await callGemini(model, image, mediaType, apiKey);
+          const result = await callGemini(model, image, mediaType, apiKey, prompt);
           return res.status(200).json(result);
         } catch (err) {
           errors.push(`[gemini/${model}] ${err.message}`);
@@ -224,7 +236,7 @@ module.exports = async function handler(req, res) {
         if (groqKeys.length === 0) break;
         const apiKey = nextKey(groqKeys);
         try {
-          const result = await callGroq(model, image, mediaType, apiKey);
+          const result = await callGroq(model, image, mediaType, apiKey, prompt);
           return res.status(200).json(result);
         } catch (err) {
           errors.push(`[groq/${model}] ${err.message}`);
