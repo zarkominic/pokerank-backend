@@ -14,7 +14,7 @@ STEP 1 - pokemon: read the Pokemon name shown in the dark banner in the center o
 
 STEP 2 - cp: read the number next to "PC" or "CP" shown in that same banner. Return as integer only.
 
-STEP 3 - weather_boosted: find the CP number (e.g. "502" or "146"). Look directly above the LAST DIGIT of that number. If there is a small circle with a WHITE background and a symbol inside it (kite, wind, sun, raindrop, snowflake) floating above that last digit, return true. If there is no circle there, return false.
+STEP 3 - weather_boosted: find the CP number (e.g. "502" or "146"). Look directly above the LAST DIGIT of that number. There may be a small circle with a WHITE background containing a KITE shape (a diamond/rhombus with a tail, like a flying kite toy) inside it. If you see this white circle with a kite inside above the last digit of the CP, return true. If there is no circle there, return false.
 
 Return a JSON object with keys: pokemon, cp, weather_boosted.`;
 
