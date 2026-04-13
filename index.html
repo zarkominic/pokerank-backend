@@ -438,10 +438,11 @@ async function handlePhoto(input){
       const key=Object.keys(DB).find(k=>DB[k].n.toLowerCase().includes(data.pokemon.toLowerCase()));
       if(key)selectPoke(key);
     }
-    if(data.stars!==undefined)setStar(data.stars);
-    if(data.atk_bar)setBar('atk',data.atk_bar);
-    if(data.def_bar)setBar('def',data.def_bar);
-    if(data.sta_bar)setBar('sta',data.sta_bar);
+    if(data.stars!=null)setStar(Number(data.stars));
+    const validBar=['empty','low','mid','high','full'];
+    if(data.atk_bar&&validBar.includes(data.atk_bar))setBar('atk',data.atk_bar);
+    if(data.def_bar&&validBar.includes(data.def_bar))setBar('def',data.def_bar);
+    if(data.sta_bar&&validBar.includes(data.sta_bar))setBar('sta',data.sta_bar);
     if(data.cp)document.getElementById('current-cp').value=data.cp;
     // Auto evaluate
     setTimeout(evaluate,400);
