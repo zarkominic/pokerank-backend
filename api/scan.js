@@ -26,7 +26,6 @@ STEP 5 - is_encounter: false if owned Pokemon, true if wild encounter.
 Return a JSON object with keys: pokemon, cp, stars, atk_bar, def_bar, sta_bar, is_encounter.`;
 
 function extractJSON(txt) {
-  // Try to find JSON in the response, handling markdown code blocks
   const cleaned = txt
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/g, "")
@@ -34,6 +33,26 @@ function extractJSON(txt) {
   const m = cleaned.match(/\{[\s\S]*\}/);
   if (m) return JSON.parse(m[0]);
   throw new Error("No JSON in response");
+}
+
+// Round-robin counter shared across warm instances
+let keyIndex = 0;
+
+function getApiKeys() {
+  const keys = [];
+  // Support GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3, ...
+  if (process.env.GEMINI_API_KEY) keys.push(process.env.GEMINI_API_KEY);
+  for (let i = 2; i <= 10; i++) {
+    const k = process.env[`GEMINI_API_KEY_${i}`];
+    if (k) keys.push(k);
+  }
+  return keys;
+}
+
+function nextKey(keys) {
+  const key = keys[keyIndex % keys.length];
+  keyIndex = (keyIndex + 1) % keys.length;
+  return key;
 }
 
 async function callGemini(model, image, mediaType, apiKey) {
@@ -63,9 +82,11 @@ async function callGemini(model, image, mediaType, apiKey) {
   if (!response.ok) {
     const msg = data?.error?.message || JSON.stringify(data);
     const isOverload = response.status === 503 ||
+      response.status === 429 ||
       msg.toLowerCase().includes("high demand") ||
       msg.toLowerCase().includes("overloaded") ||
-      msg.toLowerCase().includes("try again");
+      msg.toLowerCase().includes("try again") ||
+      msg.toLowerCase().includes("quota");
     const isUnavailable = msg.toLowerCase().includes("no longer available") ||
       msg.toLowerCase().includes("not found") ||
       msg.toLowerCase().includes("deprecated");
@@ -97,25 +118,28 @@ module.exports = async function handler(req, res) {
     const { image, mediaType } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+    const keys = getApiKeys();
+    if (keys.length === 0) return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
 
     let lastError = "";
 
     for (const model of MODELS) {
-      // Try each model up to 3 times on overload
-      for (let attempt = 1; attempt <= 3; attempt++) {
+      // Try each model — on overload rotate through all keys before giving up
+      for (let attempt = 1; attempt <= keys.length * 2; attempt++) {
+        const apiKey = nextKey(keys);
         try {
           const result = await callGemini(model, image, mediaType, apiKey);
           return res.status(200).json(result);
         } catch (err) {
           lastError = err.message;
           if (err.isUnavailable) break; // Skip to next model immediately
-          if (err.isOverload && attempt < 3) {
-            await sleep(attempt * 1500); // 1.5s, then 3s
-            continue; // Retry same model
+          if (err.isOverload) {
+            // Brief pause between key rotations, longer after full cycle
+            const fullCycle = attempt % keys.length === 0;
+            if (fullCycle && attempt < keys.length * 2) await sleep(1500);
+            continue;
           }
-          if (!err.isOverload) break; // Non-retriable error, try next model
+          break; // Non-retriable error, try next model
         }
       }
     }
