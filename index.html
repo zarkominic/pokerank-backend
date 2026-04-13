@@ -110,6 +110,10 @@ input[type=range]{width:100%;accent-color:#EF4444}
 
 <div class="card">
   <div class="label" data-i18n="iv.label">IV INPUT</div>
+  <div id="stars-row" style="display:none;justify-content:center;gap:6px;margin-bottom:12px;padding:8px;background:#FFFBEB;border-radius:10px;border:1px solid #FDE68A">
+    <span style="font-size:11px;color:#D97706;font-weight:700;font-family:ui-monospace,monospace" data-i18n="stars.label">ESTRELLAS</span>
+    <span id="stars-display" style="font-size:16px;letter-spacing:2px"></span>
+  </div>
   <div style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:#EF4444;font-family:ui-monospace,monospace">ATK</span><span id="atk-val" style="font-size:15px;font-weight:900;font-family:ui-monospace,monospace">15</span></div>
     <input type="range" min="0" max="15" value="15" id="atk-slider" oninput="document.getElementById('atk-val').textContent=this.value;manualA=+this.value" style="accent-color:#EF4444;width:100%"/>
@@ -402,6 +406,11 @@ async function handlePhoto(input){
     if(data.atk_bar&&BAR_IV[data.atk_bar]!==undefined)setSlider('atk',BAR_IV[data.atk_bar]);
     if(data.def_bar&&BAR_IV[data.def_bar]!==undefined)setSlider('def',BAR_IV[data.def_bar]);
     if(data.sta_bar&&BAR_IV[data.sta_bar]!==undefined)setSlider('sta',BAR_IV[data.sta_bar]);
+    if(data.stars!=null){
+      const emojis=['💨','⭐','⭐⭐','⭐⭐⭐'];
+      document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
+      document.getElementById('stars-row').style.display='flex';
+    }
     // Auto evaluate
     setTimeout(evaluate,400);
   }catch(e){
