@@ -1,12 +1,12 @@
 const GEMINI_MODELS = [
   "gemini-2.5-flash",
   "gemini-2.5-pro",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
 ];
 
 const GROQ_MODELS = [
   "meta-llama/llama-4-scout-17b-16e-instruct",
-  "llama-3.2-90b-vision-preview",
-  "llama-3.2-11b-vision-preview",
 ];
 
 const PROMPT_BAR_SINGLE = `This image shows a single horizontal bar from a Pokemon GO appraisal screen, zoomed in.
