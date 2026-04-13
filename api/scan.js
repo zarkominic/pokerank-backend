@@ -10,34 +10,36 @@ module.exports = async function handler(req, res) {
     const { image, mediaType } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: mediaType || "image/jpeg", data: image } },
-            { type: "text", text: 'Pokemon GO screenshot. Reply ONLY raw JSON: {"pokemon":"Name","cp":0,"stars":0,"atk_bar":"full","def_bar":"full","sta_bar":"full","is_encounter":false}' }
-          ]
-        }]
-      }),
-    });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { inline_data: { mime_type: mediaType || "image/jpeg", data: image } },
+              { text: 'Pokemon GO screenshot. Reply ONLY raw JSON, no markdown: {"pokemon":"Name","cp":0,"stars":0,"atk_bar":"full","def_bar":"full","sta_bar":"full","is_encounter":false}' }
+            ]
+          }],
+          generationConfig: { maxOutputTokens: 300, temperature: 0 }
+        }),
+      }
+    );
 
     const data = await response.json();
     if (!response.ok) {
-      const msg = data?.error?.message || (typeof data?.error === 'string' ? data.error : JSON.stringify(data));
+      const msg = data?.error?.message || JSON.stringify(data);
       return res.status(500).json({ error: msg });
     }
-    const txt = (data.content || []).map(i => i.text || "").join("").trim();
+
+    const txt = (data.candidates?.[0]?.content?.parts || [])
+      .map(p => p.text || "").join("").trim();
     const m = txt.match(/\{[\s\S]*\}/);
-    if (!m) return res.status(500).json({ error: "No JSON", raw: txt });
+    if (!m) return res.status(500).json({ error: "No JSON in response", raw: txt });
     return res.status(200).json(JSON.parse(m[0]));
   } catch (err) {
     return res.status(500).json({ error: err.message });
