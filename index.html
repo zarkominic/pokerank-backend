@@ -499,12 +499,19 @@ async function handleCatchPhoto(input){
   err.style.display='none';
   loading.style.display='block';
   try{
-    const compressed=await readAndCompress(file,false);
+    const [compressed, bannerImg] = await Promise.all([
+      readAndCompress(file,false),
+      cropBanner(file)
+    ]);
     prev.src=compressed;
     prev.style.display='block';
     lbl.textContent=t('catch.change');
     const b64=compressed.split(',')[1];
-    const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'wild'})});
+    const b64banner=bannerImg.split(',')[1];
+    const [res, weatherRes] = await Promise.all([
+      fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'wild'})}),
+      fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64banner,mediaType:'image/jpeg',mode:'weather'})})
+    ]);
     const data=await res.json();
     if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
     if(data.cp) wildCP=data.cp;
@@ -512,12 +519,49 @@ async function handleCatchPhoto(input){
       document.getElementById('catch-search').value=data.pokemon;
       renderWild();
     }
-    if(data.weather_boosted!=null) setWeather(data.weather_boosted);
+    if(weatherRes.ok){
+      const wdata=await weatherRes.json();
+      if(wdata.weather_boosted!=null) setWeather(wdata.weather_boosted);
+    }
   }catch(e){
     err.textContent=e.message;
     err.style.display='block';
   }
   loading.style.display='none';
+}
+
+// Crop and zoom the banner area (top 20-50% of image) where name/CP lives
+function cropBanner(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        // The encounter banner is roughly at 20-50% from top
+        const sy=Math.floor(img.height*0.20);
+        const sh=Math.floor(img.height*0.30);
+        // Scale up 3x so the weather circle is large
+        const canvas=document.createElement('canvas');
+        canvas.width=img.width*2;
+        canvas.height=sh*3;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,sy,img.width,sh,0,0,canvas.width,canvas.height);
+        // Apply grayscale
+        const d=ctx.getImageData(0,0,canvas.width,canvas.height);
+        const px=d.data;
+        for(let i=0;i<px.length;i+=4){
+          const g=px[i]*0.299+px[i+1]*0.587+px[i+2]*0.114;
+          px[i]=px[i+1]=px[i+2]=g;
+        }
+        ctx.putImageData(d,0,0);
+        resolve(canvas.toDataURL('image/jpeg',0.92));
+      };
+      img.onerror=reject;
+      img.src=ev.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function readAndCompress(file, highContrast=false){

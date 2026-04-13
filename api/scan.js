@@ -8,6 +8,12 @@ const GROQ_MODELS = [
   "meta-llama/llama-4-maverick-17b-128e-instruct",
 ];
 
+const PROMPT_WEATHER = `This is a zoomed grayscale crop of a Pokemon GO wild encounter banner showing the Pokemon name and CP number.
+
+Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail pointing down) inside it. This circle appears directly above the last digit of the CP number.
+
+Return ONLY this JSON: {"weather_boosted": true} if you see this white circle with a kite, or {"weather_boosted": false} if you do not see it.`;
+
 const PROMPT_WILD = `Analyze this Pokemon GO screenshot showing a wild Pokemon encounter screen.
 
 STEP 1 - pokemon: read the Pokemon name shown in the dark banner in the center of the screen (e.g. "Hoppip", "Pikachu", "Kyogre").
@@ -203,7 +209,7 @@ module.exports = async function handler(req, res) {
     const { image, mediaType, mode } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    const prompt = mode === "wild" ? PROMPT_WILD : PROMPT;
+    const prompt = mode === "weather" ? PROMPT_WEATHER : mode === "wild" ? PROMPT_WILD : PROMPT;
 
     const geminiKeys = getKeys("GEMINI_API_KEY");
     const groqKeys = getKeys("GROQ_API_KEY");
