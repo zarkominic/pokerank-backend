@@ -266,6 +266,19 @@ function ccp(bA,bD,bS,iA,iD,iS,l){const c=gc(l);return Math.max(10,Math.floor((b
 
 // ═══ DB ═══
 const DB={
+pikachu:{n:"Pikachu",t:["Electric"],bA:112,bD:96,bS:111,mCP:938,tier:"A",e:"⚡",pve:"Raichu niche",pvp:"Thunder Shock + Discharge / Surf",r:["Little League","GL niche"]},
+eevee:{n:"Eevee",t:["Normal"],bA:104,bD:114,bS:146,mCP:1210,tier:"A",e:"🦊",pve:"Evolve",pvp:"Quick Attack + Last Resort",r:["GL niche","Evolve to meta"]},
+snorlax:{n:"Snorlax",t:["Normal"],bA:190,bD:169,bS:330,mCP:3225,tier:"A",e:"😴",pve:"Niche",pvp:"Lick + Body Slam / Superpower",r:["Master League","Bulky"]},
+dragonite:{n:"Dragonite",t:["Dragon","Flying"],bA:263,bD:198,bS:209,mCP:4287,tier:"A",e:"🐉",pve:"Dragon Tail + Dragon Claw",pvp:"Dragon Breath + Dragon Claw / Hurricane",r:["Top Dragon","Master League"]},
+gengar:{n:"Gengar",t:["Ghost","Poison"],bA:261,bD:149,bS:155,mCP:2878,tier:"A",e:"👻",pve:"Shadow Claw + Shadow Ball",pvp:"Shadow Claw + Shadow Ball",r:["Ghost Attacker","GL/UL"]},
+alakazam:{n:"Alakazam",t:["Psychic"],bA:271,bD:167,bS:146,mCP:3456,tier:"A",e:"🔮",pve:"Psycho Cut + Psychic",pvp:"Counter + Psychic / Shadow Ball",r:["Psychic Attacker"]},
+machamp:{n:"Machamp",t:["Fighting"],bA:234,bD:159,bS:207,mCP:3056,tier:"A",e:"💪",pve:"Counter + Dynamic Punch",pvp:"Counter + Cross Chop / Rock Slide",r:["Fighting","All Leagues"]},
+golem:{n:"Golem",t:["Rock","Ground"],bA:211,bD:198,bS:190,mCP:2949,tier:"B",e:"🪨",pve:"Rock Throw + Stone Edge",pvp:"Rock Throw + Stone Edge",r:["Rock Attacker"]},
+vaporeon:{n:"Vaporeon",t:["Water"],bA:205,bD:161,bS:277,mCP:3521,tier:"A",e:"💧",pve:"Water Gun + Hydro Pump",pvp:"Water Gun + Aqua Tail / Last Resort",r:["Water Attacker","GL bulk"]},
+jolteon:{n:"Jolteon",t:["Electric"],bA:232,bD:182,bS:163,mCP:3265,tier:"B",e:"⚡",pve:"Thunder Shock + Thunderbolt",pvp:"Thunder Shock + Thunderbolt",r:["Electric Attacker"]},
+flareon:{n:"Flareon",t:["Fire"],bA:246,bD:179,bS:163,mCP:3424,tier:"B",e:"🔥",pve:"Fire Spin + Overheat",pvp:"Fire Spin + Overheat",r:["Fire Attacker"]},
+espeon:{n:"Espeon",t:["Psychic"],bA:261,bD:175,bS:163,mCP:3170,tier:"A",e:"🌞",pve:"Confusion + Psychic",pvp:"Confusion + Psychic / Shadow Ball",r:["Psychic Attacker"]},
+umbreon:{n:"Umbreon",t:["Dark"],bA:126,bD:240,bS:216,mCP:2416,tier:"S",e:"🌙",pve:"Niche",pvp:"Snarl + Foul Play / Last Resort",r:["Great League Wall","Ultra League"]},
 kyogre:{n:"Kyogre",t:["Water"],bA:270,bD:228,bS:205,mCP:4115,tier:"S",e:"🐳",pve:"Waterfall + Origin Pulse",pvp:"Waterfall + Origin Pulse / Blizzard",r:["Top Water","Master League"],primal:1},
 groudon:{n:"Groudon",t:["Ground"],bA:270,bD:228,bS:205,mCP:4115,tier:"S",e:"🌋",pve:"Mud Shot + Precipice Blades",pvp:"Mud Shot + Precipice Blades / Fire Punch",r:["Top Ground","Master League"],primal:1},
 mewtwo:{n:"Mewtwo",t:["Psychic"],bA:300,bD:182,bS:214,mCP:4178,tier:"S",e:"🧬",pve:"Psycho Cut + Psystrike",pvp:"Psycho Cut + Psystrike / Shadow Ball",r:["Top Psychic","Master League"]},
@@ -456,29 +469,45 @@ async function handlePhoto(input){
   loading.style.display='block';
 
   try{
-    const compressed=await readAndCompress(file);
+    const [compressed, ivCrop] = await Promise.all([
+      readAndCompress(file),
+      cropIVPanel(file)
+    ]);
     prev.src=compressed;
     prev.style.display='block';
     lbl.textContent=t('scan.change');
     const b64=compressed.split(',')[1];
-    const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
+    const b64iv=ivCrop.split(',')[1];
+    // Two parallel calls: main image for name/cp/stars, cropped panel for IV bars
+    const [res, barsRes] = await Promise.all([
+      fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'appraisal'})}),
+      fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64iv,mediaType:'image/jpeg',mode:'bars'})})
+    ]);
     const data=await res.json();
     if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
-    // Bar → exact IV conversion (midpoint of each range)
-    const BAR_IV={empty:0,low:3,mid:8,high:12,full:15};
-    // Apply results
+    // Apply name, cp, stars from main scan
     if(data.pokemon){
       const key=Object.keys(DB).find(k=>DB[k].n.toLowerCase().includes(data.pokemon.toLowerCase()));
       if(key)selectPoke(key);
     }
     if(data.cp)document.getElementById('current-cp').value=data.cp;
-    if(data.atk_bar&&BAR_IV[data.atk_bar]!==undefined)setSlider('atk',BAR_IV[data.atk_bar]);
-    if(data.def_bar&&BAR_IV[data.def_bar]!==undefined)setSlider('def',BAR_IV[data.def_bar]);
-    if(data.sta_bar&&BAR_IV[data.sta_bar]!==undefined)setSlider('sta',BAR_IV[data.sta_bar]);
     if(data.stars!=null){
       const emojis=['💨','⭐','⭐⭐','⭐⭐⭐'];
       document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
       document.getElementById('stars-row').style.display='flex';
+    }
+    // Apply IV bars from zoomed crop
+    const BAR_IV={empty:0,low:3,mid:8,high:12,full:15};
+    if(barsRes.ok){
+      const bd=await barsRes.json();
+      if(bd.atk_bar&&BAR_IV[bd.atk_bar]!==undefined)setSlider('atk',BAR_IV[bd.atk_bar]);
+      if(bd.def_bar&&BAR_IV[bd.def_bar]!==undefined)setSlider('def',BAR_IV[bd.def_bar]);
+      if(bd.sta_bar&&BAR_IV[bd.sta_bar]!==undefined)setSlider('sta',BAR_IV[bd.sta_bar]);
+    } else {
+      // Fallback to bars from main scan if crop call failed
+      if(data.atk_bar&&BAR_IV[data.atk_bar]!==undefined)setSlider('atk',BAR_IV[data.atk_bar]);
+      if(data.def_bar&&BAR_IV[data.def_bar]!==undefined)setSlider('def',BAR_IV[data.def_bar]);
+      if(data.sta_bar&&BAR_IV[data.sta_bar]!==undefined)setSlider('sta',BAR_IV[data.sta_bar]);
     }
     // Auto evaluate
     setTimeout(evaluate,400);
@@ -528,6 +557,30 @@ async function handleCatchPhoto(input){
     err.style.display='block';
   }
   loading.style.display='none';
+}
+
+// Crop and zoom the IV bar panel (lower 50-85% of appraisal screen)
+function cropIVPanel(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const sy=Math.floor(img.height*0.50);
+        const sh=Math.floor(img.height*0.38);
+        const canvas=document.createElement('canvas');
+        canvas.width=img.width*2;
+        canvas.height=sh*3;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,sy,img.width,sh,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.92));
+      };
+      img.onerror=reject;
+      img.src=ev.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // Crop and zoom the banner area (top 20-50% of image) where name/CP lives

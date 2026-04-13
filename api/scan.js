@@ -8,6 +8,28 @@ const GROQ_MODELS = [
   "meta-llama/llama-4-maverick-17b-128e-instruct",
 ];
 
+const PROMPT_BARS = `This is a zoomed crop of a Pokemon GO appraisal panel showing 3 IV evaluation bars.
+
+The panel has 3 horizontal bars in this order from top to bottom:
+1. Attack / Ataque
+2. Defense / Defensa
+3. Stamina / PS
+
+Each bar is a horizontal rectangle divided into exactly 4 equal segments separated by small gaps.
+FILLED segments are ORANGE or AMBER colored.
+EMPTY segments are LIGHT GREY.
+
+For each bar scan LEFT TO RIGHT and count the orange segments:
+  0 orange = "empty"
+  1 orange = "low"
+  2 orange = "mid"
+  3 orange = "high"
+  4 orange = "full"
+
+Each bar has an INDEPENDENT value — do NOT assume they are the same.
+
+Return ONLY: {"atk_bar": "...", "def_bar": "...", "sta_bar": "..."}`;
+
 const PROMPT_WEATHER = `This is a zoomed grayscale crop of a Pokemon GO wild encounter banner showing the Pokemon name and CP number.
 
 Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail pointing down) inside it. This circle appears directly above the last digit of the CP number.
@@ -209,7 +231,7 @@ module.exports = async function handler(req, res) {
     const { image, mediaType, mode } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    const prompt = mode === "weather" ? PROMPT_WEATHER : mode === "wild" ? PROMPT_WILD : PROMPT;
+    const prompt = mode === "bars" ? PROMPT_BARS : mode === "weather" ? PROMPT_WEATHER : mode === "wild" ? PROMPT_WILD : PROMPT;
 
     const geminiKeys = getKeys("GEMINI_API_KEY");
     const groqKeys = getKeys("GROQ_API_KEY");
