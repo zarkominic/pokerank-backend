@@ -442,6 +442,7 @@ async function handleCatchPhoto(input){
       document.getElementById('catch-search').value=data.pokemon;
       renderWild();
     }
+    if(data.weather_boosted!=null) setWeather(data.weather_boosted);
   }catch(e){
     err.textContent=e.message;
     err.style.display='block';
@@ -602,6 +603,10 @@ function toggleWeather(){
   weatherOn=!weatherOn;
   const t=document.getElementById('weather-toggle');
   t.classList.toggle('on',weatherOn);
+}
+function setWeather(val){
+  weatherOn=!!val;
+  document.getElementById('weather-toggle').classList.toggle('on',weatherOn);
 }
 
 function renderWild(){
