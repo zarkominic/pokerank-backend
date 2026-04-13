@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
     });
 
     const data = await response.json();
-    if (!response.ok) return res.status(500).json({ error: data });
+    if (!response.ok) return res.status(500).json({ error: data?.error?.message || data?.error || JSON.stringify(data) });
     const txt = (data.content || []).map(i => i.text || "").join("").trim();
     const m = txt.match(/\{[\s\S]*\}/);
     if (!m) return res.status(500).json({ error: "No JSON", raw: txt });

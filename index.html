@@ -346,7 +346,7 @@ async function handlePhoto(input){
     const b64=compressed.split(',')[1];
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
     const data=await res.json();
-    if(!res.ok)throw new Error(data.error||'Error servidor');
+    if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||'Error servidor');
     // Apply results
     if(data.pokemon){
       const key=Object.keys(DB).find(k=>DB[k].n.toLowerCase().includes(data.pokemon.toLowerCase()));
@@ -383,7 +383,7 @@ async function handleCatchPhoto(input){
     const b64=compressed.split(',')[1];
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
     const data=await res.json();
-    if(!res.ok)throw new Error(data.error||'Error servidor');
+    if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||'Error servidor');
     if(data.pokemon){
       document.getElementById('catch-search').value=data.pokemon;
       renderWild();
