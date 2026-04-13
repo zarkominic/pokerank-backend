@@ -669,12 +669,13 @@ function renderBox(){
 // ═══ CATCH ═══
 function toggleWeather(){
   weatherOn=!weatherOn;
-  const t=document.getElementById('weather-toggle');
-  t.classList.toggle('on',weatherOn);
+  document.getElementById('weather-toggle').classList.toggle('on',weatherOn);
+  renderWild();
 }
 function setWeather(val){
   weatherOn=!!val;
   document.getElementById('weather-toggle').classList.toggle('on',weatherOn);
+  renderWild();
 }
 
 function renderWild(){
