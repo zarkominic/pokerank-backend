@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "api/scan.js": {
-      "maxDuration": 30
+      "maxDuration": 45
     }
   }
 }

@@ -1,6 +1,11 @@
-const MODELS = [
+const GEMINI_MODELS = [
   "gemini-2.5-flash",
   "gemini-2.5-pro",
+];
+
+const GROQ_MODELS = [
+  "meta-llama/llama-4-scout-17b-16e-instruct",
+  "meta-llama/llama-4-maverick-17b-128e-instruct",
 ];
 
 const PROMPT = `Analyze this Pokemon GO screenshot showing a Pokemon's appraisal screen.
@@ -37,12 +42,11 @@ function extractJSON(txt) {
 // Round-robin counter shared across warm instances
 let keyIndex = 0;
 
-function getApiKeys() {
+function getKeys(prefix) {
   const keys = [];
-  // Support GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3, ...
-  if (process.env.GEMINI_API_KEY) keys.push(process.env.GEMINI_API_KEY);
+  if (process.env[prefix]) keys.push(process.env[prefix]);
   for (let i = 2; i <= 10; i++) {
-    const k = process.env[`GEMINI_API_KEY_${i}`];
+    const k = process.env[`${prefix}_${i}`];
     if (k) keys.push(k);
   }
   return keys;
@@ -54,39 +58,14 @@ function nextKey(keys) {
   return key;
 }
 
-async function callGemini(model, image, mediaType, apiKey) {
+async function fetchWithTimeout(url, options, ms) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 7000); // 7s max per attempt
-
-  let response;
+  const timer = setTimeout(() => controller.abort(), ms);
   try {
-    response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        signal: controller.signal,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { inline_data: { mime_type: mediaType || "image/jpeg", data: image } },
-              { text: PROMPT }
-            ]
-          }],
-          generationConfig: {
-            maxOutputTokens: 300,
-            temperature: 0,
-            responseMimeType: "application/json"
-          },
-          thinkingConfig: {
-            thinkingBudget: 0
-          }
-        })
-      }
-    );
+    return await fetch(url, { ...options, signal: controller.signal });
   } catch (err) {
     if (err.name === "AbortError") {
-      const e = new Error("Request timed out after 7s");
+      const e = new Error(`Request timed out after ${ms / 1000}s`);
       e.isOverload = true;
       throw e;
     }
@@ -94,6 +73,31 @@ async function callGemini(model, image, mediaType, apiKey) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function callGemini(model, image, mediaType, apiKey) {
+  const response = await fetchWithTimeout(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { inline_data: { mime_type: mediaType || "image/jpeg", data: image } },
+            { text: PROMPT }
+          ]
+        }],
+        generationConfig: {
+          maxOutputTokens: 300,
+          temperature: 0,
+          responseMimeType: "application/json"
+        },
+        thinkingConfig: { thinkingBudget: 0 }
+      })
+    },
+    6000 // 6s per Gemini attempt
+  );
 
   const data = await response.json();
 
@@ -114,11 +118,56 @@ async function callGemini(model, image, mediaType, apiKey) {
     throw err;
   }
 
-  // Filter out thinking parts (gemini-2.5 models include internal reasoning)
   const txt = (data.candidates?.[0]?.content?.parts || [])
     .filter(p => !p.thought)
     .map(p => p.text || "").join("").trim();
 
+  return extractJSON(txt);
+}
+
+async function callGroq(model, image, mediaType, apiKey) {
+  const response = await fetchWithTimeout(
+    "https://api.groq.com/openai/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:${mediaType || "image/jpeg"};base64,${image}` }
+            },
+            { type: "text", text: PROMPT }
+          ]
+        }],
+        response_format: { type: "json_object" },
+        max_tokens: 300,
+        temperature: 0
+      })
+    },
+    10000 // 10s per Groq attempt
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const msg = data?.error?.message || JSON.stringify(data);
+    const isOverload = response.status === 503 ||
+      response.status === 429 ||
+      msg.toLowerCase().includes("rate limit") ||
+      msg.toLowerCase().includes("overloaded");
+    const err = new Error(msg);
+    err.isOverload = isOverload;
+    throw err;
+  }
+
+  const txt = data.choices?.[0]?.message?.content || "";
   return extractJSON(txt);
 }
 
@@ -138,23 +187,43 @@ module.exports = async function handler(req, res) {
     const { image, mediaType } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    const keys = getApiKeys();
-    if (keys.length === 0) return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+    const geminiKeys = getKeys("GEMINI_API_KEY");
+    const groqKeys = getKeys("GROQ_API_KEY");
+
+    if (geminiKeys.length === 0 && groqKeys.length === 0) {
+      return res.status(500).json({ error: "No API keys configured" });
+    }
 
     const errors = [];
 
-    for (const model of MODELS) {
-      // Try each key once per model (no sleep — 7s timeout per attempt, 2 models, 3 keys = ~42s max but Vercel is 30s)
-      for (let attempt = 0; attempt < keys.length; attempt++) {
-        const apiKey = nextKey(keys);
+    // 1. Try Gemini (all models x all keys)
+    for (const model of GEMINI_MODELS) {
+      for (let i = 0; i < geminiKeys.length; i++) {
+        const apiKey = nextKey(geminiKeys);
         try {
           const result = await callGemini(model, image, mediaType, apiKey);
           return res.status(200).json(result);
         } catch (err) {
-          errors.push(`[${model}] ${err.message}`);
-          if (err.isUnavailable) break; // Skip to next model immediately
-          if (err.isOverload) continue;  // Try next key immediately
-          break; // Non-retriable error, try next model
+          errors.push(`[gemini/${model}] ${err.message}`);
+          if (err.isUnavailable) break;
+          if (err.isOverload) continue;
+          break;
+        }
+      }
+    }
+
+    // 2. Fallback to Groq
+    for (const model of GROQ_MODELS) {
+      for (let i = 0; i < Math.max(groqKeys.length, 1); i++) {
+        if (groqKeys.length === 0) break;
+        const apiKey = nextKey(groqKeys);
+        try {
+          const result = await callGroq(model, image, mediaType, apiKey);
+          return res.status(200).json(result);
+        } catch (err) {
+          errors.push(`[groq/${model}] ${err.message}`);
+          if (err.isOverload) continue;
+          break;
         }
       }
     }
