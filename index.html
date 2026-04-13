@@ -128,40 +128,22 @@ input[type=range]{width:100%;accent-color:#EF4444}
 
 <div class="card">
   <div class="label" data-i18n="iv.label">IV INPUT</div>
-  <div class="mode-row">
-    <button class="mode-btn active" onclick="setMode('appraisal')" data-i18n="iv.appraisal">Appraisal Bars</button>
-    <button class="mode-btn" onclick="setMode('manual')" data-i18n="iv.manual">IVs Exactos</button>
+  <div style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:#EF4444;font-family:ui-monospace,monospace">ATK</span><span id="atk-val" style="font-size:15px;font-weight:900;font-family:ui-monospace,monospace">15</span></div>
+    <input type="range" min="0" max="15" value="15" id="atk-slider" oninput="document.getElementById('atk-val').textContent=this.value;manualA=+this.value" style="accent-color:#EF4444;width:100%"/>
   </div>
-  <div id="appraisal-section">
-    <div class="label" data-i18n="stars.label">ESTRELLAS TOTALES</div>
-    <div class="stars-row">
-      <button class="star-btn" onclick="setStar(0)"><div>💨</div><div class="star-label">&lt;50%</div></button>
-      <button class="star-btn" onclick="setStar(1)"><div>⭐</div><div class="star-label">50-64%</div></button>
-      <button class="star-btn" onclick="setStar(2)"><div>⭐⭐</div><div class="star-label">65-80%</div></button>
-      <button class="star-btn active" onclick="setStar(3)"><div>⭐⭐⭐</div><div class="star-label">82-100%</div></button>
-    </div>
-    <div id="bar-atk"></div>
-    <div id="bar-def"></div>
-    <div id="bar-sta"></div>
+  <div style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:#3B82F6;font-family:ui-monospace,monospace">DEF</span><span id="def-val" style="font-size:15px;font-weight:900;font-family:ui-monospace,monospace">15</span></div>
+    <input type="range" min="0" max="15" value="15" id="def-slider" oninput="document.getElementById('def-val').textContent=this.value;manualD=+this.value" style="accent-color:#3B82F6;width:100%"/>
   </div>
-  <div id="manual-section" style="display:none">
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:#EF4444;font-family:ui-monospace,monospace">ATK</span><span id="atk-val" style="font-size:15px;font-weight:900;font-family:ui-monospace,monospace">15</span></div>
-      <input type="range" min="0" max="15" value="15" oninput="document.getElementById('atk-val').textContent=this.value;manualA=+this.value" style="accent-color:#EF4444;width:100%"/>
-    </div>
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:#3B82F6;font-family:ui-monospace,monospace">DEF</span><span id="def-val" style="font-size:15px;font-weight:900;font-family:ui-monospace,monospace">15</span></div>
-      <input type="range" min="0" max="15" value="15" oninput="document.getElementById('def-val').textContent=this.value;manualD=+this.value" style="accent-color:#3B82F6;width:100%"/>
-    </div>
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:#22C55E;font-family:ui-monospace,monospace">STA</span><span id="sta-val" style="font-size:15px;font-weight:900;font-family:ui-monospace,monospace">15</span></div>
-      <input type="range" min="0" max="15" value="15" oninput="document.getElementById('sta-val').textContent=this.value;manualS=+this.value" style="accent-color:#22C55E;width:100%"/>
-    </div>
-    <div style="display:flex;gap:3px">
-      <button onclick="setManual(15,15,15)" style="flex:1;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 0;cursor:pointer;color:#64748B;font-size:9px;font-weight:700;font-family:ui-monospace,monospace">Hundo</button>
-      <button onclick="setManual(0,15,15)" style="flex:1;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 0;cursor:pointer;color:#64748B;font-size:9px;font-weight:700;font-family:ui-monospace,monospace">PvP</button>
-      <button onclick="setManual(15,15,14)" style="flex:1;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 0;cursor:pointer;color:#64748B;font-size:9px;font-weight:700;font-family:ui-monospace,monospace">Raid</button>
-    </div>
+  <div style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:#22C55E;font-family:ui-monospace,monospace">STA</span><span id="sta-val" style="font-size:15px;font-weight:900;font-family:ui-monospace,monospace">15</span></div>
+    <input type="range" min="0" max="15" value="15" id="sta-slider" oninput="document.getElementById('sta-val').textContent=this.value;manualS=+this.value" style="accent-color:#22C55E;width:100%"/>
+  </div>
+  <div style="display:flex;gap:3px">
+    <button onclick="setManual(15,15,15)" style="flex:1;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 0;cursor:pointer;color:#64748B;font-size:9px;font-weight:700;font-family:ui-monospace,monospace">Hundo</button>
+    <button onclick="setManual(0,15,15)" style="flex:1;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 0;cursor:pointer;color:#64748B;font-size:9px;font-weight:700;font-family:ui-monospace,monospace">PvP</button>
+    <button onclick="setManual(15,15,14)" style="flex:1;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 0;cursor:pointer;color:#64748B;font-size:9px;font-weight:700;font-family:ui-monospace,monospace">Raid</button>
   </div>
 </div>
 <button class="btn-main" id="eval-btn" onclick="evaluate()">⚡ EVALUAR</button>
@@ -279,7 +261,7 @@ function translate(){
   const navKeys=['nav.evaluate','nav.catch','nav.box','nav.meta'];
   document.querySelectorAll('.nav button').forEach((b,i)=>b.textContent=t(navKeys[i]));
   document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
-  renderBars();renderBox();renderWild();
+  renderBox();renderWild();
 }
 function toggleLang(){
   currentLang=currentLang==='es'?'en':'es';
@@ -321,8 +303,6 @@ zacian:{n:"Zacian",t:["Fairy","Steel"],bA:254,bD:236,bS:192,mCP:3829,tier:"S",e:
 
 const TC={Water:"#3B82F6",Fire:"#EF4444",Grass:"#22C55E",Electric:"#EAB308",Psychic:"#EC4899",Ghost:"#8B5CF6",Dragon:"#7C3AED",Dark:"#78716C",Steel:"#94A3B8",Fighting:"#DC2626",Rock:"#A16207",Ground:"#CA8A04",Flying:"#818CF8",Ice:"#06B6D4",Fairy:"#F472B6",Normal:"#9CA3AF",Poison:"#A855F7",Bug:"#84CC16"};
 const TIERC={S:"#F59E0B",A:"#22C55E"};
-const BAR_R={empty:[0,0],low:[1,5],mid:[6,10],high:[11,14],full:[15,15]};
-const STAR_R={0:[0,22],1:[23,29],2:[30,36],3:[37,45]};
 
 const WILD=[
 {n:"Doduo",t:["Normal","Flying"],e:"🐦",bA:158,bD:83,bS:111,dust:100,candy:3,pvp:[],pve:"None",rare:"Common",verdict:"Skip unless necesitas candy de Dodrio.",col:"#9CA3AF"},
@@ -339,20 +319,17 @@ const WILD=[
 
 // ═══ STATE ═══
 let selectedKey=null;
-let stars=3;
-let bars={atk:"full",def:"full",sta:"full"};
 let manualA=15,manualD=15,manualS=15;
-let ivMode="appraisal";
 let weatherOn=false;
 let myBox=[];
 
 // ═══ INIT ═══
 window.onload=function(){
   loadBox();
-  renderBars();
+
   renderWild();
   renderMeta();
-  setStar(3);
+
   translate();
 };
 
@@ -433,17 +410,17 @@ async function handlePhoto(input){
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
     const data=await res.json();
     if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'));
+    // Bar → exact IV conversion (midpoint of each range)
+    const BAR_IV={empty:0,low:3,mid:8,high:12,full:15};
     // Apply results
     if(data.pokemon){
       const key=Object.keys(DB).find(k=>DB[k].n.toLowerCase().includes(data.pokemon.toLowerCase()));
       if(key)selectPoke(key);
     }
-    if(data.stars!=null)setStar(Number(data.stars));
-    const validBar=['empty','low','mid','high','full'];
-    if(data.atk_bar&&validBar.includes(data.atk_bar))setBar('atk',data.atk_bar);
-    if(data.def_bar&&validBar.includes(data.def_bar))setBar('def',data.def_bar);
-    if(data.sta_bar&&validBar.includes(data.sta_bar))setBar('sta',data.sta_bar);
     if(data.cp)document.getElementById('current-cp').value=data.cp;
+    if(data.atk_bar&&BAR_IV[data.atk_bar]!==undefined)setSlider('atk',BAR_IV[data.atk_bar]);
+    if(data.def_bar&&BAR_IV[data.def_bar]!==undefined)setSlider('def',BAR_IV[data.def_bar]);
+    if(data.sta_bar&&BAR_IV[data.sta_bar]!==undefined)setSlider('sta',BAR_IV[data.sta_bar]);
     // Auto evaluate
     setTimeout(evaluate,400);
   }catch(e){
@@ -505,68 +482,17 @@ function readAndCompress(file){
   });
 }
 
-// ═══ STARS ═══
-function setStar(n){
-  stars=n;
-  document.querySelectorAll('.star-btn').forEach((b,i)=>{
-    b.classList.toggle('active',i===n);
-  });
+function setSlider(stat,val){
+  const ids={atk:['atk-slider','atk-val'],def:['def-slider','def-val'],sta:['sta-slider','sta-val']};
+  const vars={atk:()=>manualA=val,def:()=>manualD=val,sta:()=>manualS=val};
+  document.getElementById(ids[stat][0]).value=val;
+  document.getElementById(ids[stat][1]).textContent=val;
+  vars[stat]();
 }
-
-// ═══ BARS ═══
-const BAR_OPTS=["empty","low","mid","high","full"];
-const BAR_LBLS=["None","Low","Mid","High","Max"];
-const BAR_FILL=[0,17,47,80,100];
-const BAR_COLORS={atk:"#EF4444",def:"#3B82F6",sta:"#22C55E"};
-const BAR_NAMES={atk:()=>t('bar.atk'),def:()=>t('bar.def'),sta:()=>t('bar.sta')};
-
-function renderBars(){
-  ['atk','def','sta'].forEach(key=>{
-    const el=document.getElementById('bar-'+key);
-    const color=BAR_COLORS[key];
-    const val=bars[key];
-    const fi=BAR_FILL[BAR_OPTS.indexOf(val)];
-    el.innerHTML=`
-      <div class="bar-wrap">
-        <div style="font-size:11px;font-weight:700;color:${color};font-family:ui-monospace,monospace;margin-bottom:4px">${BAR_NAMES[key]()}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${fi}%;background:${color}"></div></div>
-        <div class="bar-btns">
-          ${BAR_OPTS.map((o,i)=>`<button class="bar-btn${val===o?' active':''}" style="${val===o?`background:${color}20;border-color:${color};color:${color}`:''}" onclick="setBar('${key}','${o}')">${BAR_LBLS[i]}</button>`).join('')}
-        </div>
-      </div>`;
-  });
-}
-
-function setBar(key,val){
-  bars[key]=val;
-  renderBars();
-}
-
-// ═══ MODE ═══
-function setMode(m){
-  ivMode=m;
-  document.querySelectorAll('.mode-btn').forEach((b,i)=>b.classList.toggle('active',i===(m==='appraisal'?0:1)));
-  document.getElementById('appraisal-section').style.display=m==='appraisal'?'block':'none';
-  document.getElementById('manual-section').style.display=m==='manual'?'block':'none';
-}
-
 function setManual(a,d,s){
-  manualA=a;manualD=d;manualS=s;
-  document.querySelectorAll('input[type=range]')[0].value=a;document.getElementById('atk-val').textContent=a;
-  document.querySelectorAll('input[type=range]')[1].value=d;document.getElementById('def-val').textContent=d;
-  document.querySelectorAll('input[type=range]')[2].value=s;document.getElementById('sta-val').textContent=s;
+  setSlider('atk',a);setSlider('def',d);setSlider('sta',s);
 }
 
-// ═══ IV LOGIC ═══
-function resolveIV(){
-  const sr=STAR_R[stars];
-  const ar=BAR_R[bars.atk],dr=BAR_R[bars.def],sr2=BAR_R[bars.sta];
-  const combos=[];
-  for(let a=ar[0];a<=ar[1];a++)for(let d=dr[0];d<=dr[1];d++)for(let s=sr2[0];s<=sr2[1];s++){
-    const t=a+d+s;if(t>=sr[0]&&t<=sr[1])combos.push({a,d,s});
-  }
-  return combos;
-}
 
 function pvpRank(m,iA,iD,iS,lg){
   const cap=lg==='great'?1500:lg==='ultra'?2500:99999;
@@ -590,14 +516,7 @@ function verd(a,d,s){
 function evaluate(){
   if(!selectedKey)return;
   const m=DB[selectedKey];
-  let iA,iD,iS,isR=false,combos=[];
-  if(ivMode==='manual'){iA=manualA;iD=manualD;iS=manualS;}
-  else{
-    combos=resolveIV();
-    if(!combos.length)return;
-    if(combos.length===1){iA=combos[0].a;iD=combos[0].d;iS=combos[0].s;}
-    else{isR=true;const b=combos.reduce((x,y)=>(x.a+x.d+x.s)>=(y.a+y.d+y.s)?x:y);iA=b.a;iD=b.d;iS=b.s;}
-  }
+  const iA=manualA,iD=manualD,iS=manualS;
   const pct=((iA+iD+iS)/45*100).toFixed(1);
   const v=verd(iA,iD,iS);
   const cp40=ccp(m.bA,m.bD,m.bS,iA,iD,iS,40);
@@ -622,7 +541,6 @@ function evaluate(){
       <div style="display:flex;justify-content:center;gap:5px;margin-bottom:10px">${m.t.map(t=>`<span class="badge" style="background:${TC[t]}">${t.toUpperCase()}</span>`).join('')}<span class="badge" style="background:${TIERC[m.tier]}">TIER ${m.tier}</span></div>
       <div style="font-size:42px;font-weight:900;color:${v.col};font-family:ui-monospace,monospace">${pct}%</div>
       <div style="display:inline-block;background:${v.col}22;border:1px solid ${v.col}40;border-radius:8px;padding:4px 16px;margin-top:6px"><span style="font-size:13px;font-weight:900;color:${v.col};font-family:ui-monospace,monospace">${v.label}</span></div>
-      ${isR?`<div style="margin-top:6px;font-size:10px;color:#94A3B8;font-family:ui-monospace,monospace">${combos.length}${t('combos')}</div>`:''}
     </div>
     <div class="card">
       <div class="label">${t('iv.breakdown')}</div>
