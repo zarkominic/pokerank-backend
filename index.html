@@ -76,13 +76,18 @@ input[type=range]{width:100%;accent-color:#EF4444}
 /* Loading */
 .loading{font-size:12px;color:#F59E0B;font-weight:700;margin-bottom:8px;font-family:ui-monospace,monospace}
 .err{font-size:11px;color:#EF4444;margin-bottom:8px;padding:6px 10px;background:#FEF2F2;border-radius:8px}
+.lang-btn{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);border-radius:8px;color:#fff;font-size:10px;font-weight:800;padding:5px 11px;cursor:pointer;font-family:ui-monospace,monospace;letter-spacing:1px}
+.lang-btn:hover{background:rgba(255,255,255,.25)}
+.del-btn{background:none;border:none;cursor:pointer;color:#CBD5E1;font-size:14px;padding:4px;line-height:1}
+.del-btn:hover{color:#EF4444}
 </style>
 </head>
 <body>
-<div class="header">
+<div class="header" style="position:relative">
+  <button id="lang-btn" class="lang-btn" onclick="toggleLang()">EN</button>
   <div class="mono header-sub">POKERANK</div>
   <div class="mono header-title">GO</div>
-  <div class="mono header-desc">EVALUATE · RANK · DOMINATE</div>
+  <div class="mono header-desc" id="header-desc">EVALÚA · RANKEA · DOMINA</div>
 </div>
 <div class="wrap">
   <div class="nav">
@@ -96,7 +101,7 @@ input[type=range]{width:100%;accent-color:#EF4444}
 
   <div id="tab-evaluate" class="tab active">
     <div class="card">
-      <div class="label">BUSCAR POKÉMON</div>
+      <div class="label" data-i18n="search.label">BUSCAR POKÉMON</div>
       <input type="text" id="poke-search" placeholder="Escribe nombre (ej: Kyogre)..." oninput="onPokeSearch()" autocomplete="off"/>
       <div id="search-results" class="search-results" style="display:none"></div>
       <div id="selected-poke" style="display:none;margin-top:8px"></div>
@@ -104,7 +109,7 @@ input[type=range]{width:100%;accent-color:#EF4444}
 
 ```
 <div class="card">
-  <div class="label">SCAN SCREENSHOT</div>
+  <div class="label" data-i18n="scan.label">SCAN SCREENSHOT</div>
   <div style="text-align:center">
     <img id="photo-preview" class="photo-preview" style="display:none"/>
     <div id="photo-loading" class="loading" style="display:none">🔍 Analizando imagen…</div>
@@ -117,18 +122,18 @@ input[type=range]{width:100%;accent-color:#EF4444}
 </div>
 
 <div class="card">
-  <div class="label">CP ACTUAL (opcional)</div>
+  <div class="label" data-i18n="cp.label">CP ACTUAL (opcional)</div>
   <input type="number" id="current-cp" placeholder="CP de tu Pokémon"/>
 </div>
 
 <div class="card">
-  <div class="label">IV INPUT</div>
+  <div class="label" data-i18n="iv.label">IV INPUT</div>
   <div class="mode-row">
-    <button class="mode-btn active" onclick="setMode('appraisal')">Appraisal Bars</button>
-    <button class="mode-btn" onclick="setMode('manual')">IVs Exactos</button>
+    <button class="mode-btn active" onclick="setMode('appraisal')" data-i18n="iv.appraisal">Appraisal Bars</button>
+    <button class="mode-btn" onclick="setMode('manual')" data-i18n="iv.manual">IVs Exactos</button>
   </div>
   <div id="appraisal-section">
-    <div class="label">ESTRELLAS TOTALES</div>
+    <div class="label" data-i18n="stars.label">ESTRELLAS TOTALES</div>
     <div class="stars-row">
       <button class="star-btn" onclick="setStar(0)"><div>💨</div><div class="star-label">&lt;50%</div></button>
       <button class="star-btn" onclick="setStar(1)"><div>⭐</div><div class="star-label">50-64%</div></button>
@@ -168,9 +173,9 @@ input[type=range]{width:100%;accent-color:#EF4444}
   <!-- CATCH TAB -->
 
   <div id="tab-catch" class="tab">
-    <div class="label">¿DEBO CAPTURARLO?</div>
+    <div class="label" data-i18n="catch.title">¿DEBO CAPTURARLO?</div>
     <div class="card">
-      <div class="label">SCAN ENCUENTRO</div>
+      <div class="label" data-i18n="catch.scan">SCAN ENCUENTRO</div>
       <div style="text-align:center">
         <img id="catch-preview" class="photo-preview" style="display:none"/>
         <div id="catch-loading" class="loading" style="display:none">🔍 Analizando imagen…</div>
@@ -183,11 +188,11 @@ input[type=range]{width:100%;accent-color:#EF4444}
     </div>
     <div class="card">
       <div class="toggle-wrap">
-        <div><div style="font-size:12px;font-weight:700">¿Weather Boosted?</div><div style="font-size:10px;color:#94A3B8">Aumenta el nivel de spawn</div></div>
+        <div><div style="font-size:12px;font-weight:700" data-i18n="catch.weather">¿Weather Boosted?</div><div style="font-size:10px;color:#94A3B8" data-i18n="catch.weatherSub">Aumenta el nivel de spawn</div></div>
         <button class="toggle" id="weather-toggle" onclick="toggleWeather()"><div class="toggle-knob"></div></button>
       </div>
     </div>
-    <div class="label">BÚSQUEDA RÁPIDA</div>
+    <div class="label" data-i18n="catch.search.label">BÚSQUEDA RÁPIDA</div>
     <input type="text" id="catch-search" placeholder="Buscar Pokémon..." oninput="renderWild()" style="margin-bottom:10px"/>
     <div id="wild-list"></div>
   </div>
@@ -202,12 +207,91 @@ input[type=range]{width:100%;accent-color:#EF4444}
   <!-- META TAB -->
 
   <div id="tab-meta" class="tab">
-    <div class="label">META TIER LIST</div>
+    <div class="label" data-i18n="meta.label">META TIER LIST</div>
     <div id="meta-list"></div>
   </div>
 </div>
 
 <script>
+// ═══ I18N ═══
+const LANG={
+  es:{
+    'header.desc':'EVALÚA · RANKEA · DOMINA',
+    'nav.evaluate':'⚡ Evaluar','nav.catch':'🎯 Catch?','nav.box':'📦 Box','nav.meta':'🏆 Meta',
+    'search.label':'BUSCAR POKÉMON','search.placeholder':'Escribe nombre (ej: Kyogre)...',
+    'scan.label':'SCAN SCREENSHOT','scan.loading':'🔍 Analizando imagen…','scan.upload':'Subir Screenshot','scan.change':'Cambiar foto',
+    'cp.label':'CP ACTUAL (opcional)','cp.placeholder':'CP de tu Pokémon',
+    'iv.label':'IV INPUT','iv.appraisal':'Appraisal Bars','iv.manual':'IVs Exactos',
+    'stars.label':'ESTRELLAS TOTALES','bar.atk':'ATAQUE','bar.def':'DEFENSA','bar.sta':'STAMINA',
+    'eval.btn':'⚡ EVALUAR',
+    'catch.title':'¿DEBO CAPTURARLO?','catch.scan':'SCAN ENCUENTRO','catch.loading':'🔍 Analizando imagen…',
+    'catch.upload':'Subir Screenshot','catch.change':'Cambiar foto',
+    'catch.weather':'¿Weather Boosted?','catch.weatherSub':'Aumenta el nivel de spawn',
+    'catch.search.label':'BÚSQUEDA RÁPIDA','catch.search.placeholder':'Buscar Pokémon...',
+    'box.title':'MI BOX','box.empty':'¡Evalúa para empezar!',
+    'meta.label':'META TIER LIST',
+    'v.hundo':'¡HUNDO! Inviértelo al máximo. 🔥','v.excellent':'Excelente. Vale la inversión completa.',
+    'v.great':'Sólido. Comprueba rankings PvP abajo.','v.decent':'Espera uno mejor salvo necesidad urgente.',
+    'v.low':'Candidato a transferir. Ahorra Stardust.',
+    'combos':' combinaciones posibles','iv.breakdown':'DESGLOSE IV','cp.comp':'COMPARACIÓN CP',
+    'pvp.rank':'RANKING PVP','verdict.lbl':'⚡ VEREDICTO','primal':'🔱 ¡Reversión Primordial disponible!',
+    'add.box':'📦 Añadir al Box','wild.notfound':'¡Más Pokémon próximamente!',
+    'hundo.lbl':'Si ves estos CP, ¡podría ser un Hundo!','wild.dust':'POLVO','wild.candy':'CARAMELO',
+    'scan.err.server':'Error servidor'
+  },
+  en:{
+    'header.desc':'EVALUATE · RANK · DOMINATE',
+    'nav.evaluate':'⚡ Evaluate','nav.catch':'🎯 Catch?','nav.box':'📦 Box','nav.meta':'🏆 Meta',
+    'search.label':'SEARCH POKÉMON','search.placeholder':'Type name (e.g.: Kyogre)...',
+    'scan.label':'SCAN SCREENSHOT','scan.loading':'🔍 Analyzing image…','scan.upload':'Upload Screenshot','scan.change':'Change photo',
+    'cp.label':'CURRENT CP (optional)','cp.placeholder':'Your Pokémon CP',
+    'iv.label':'IV INPUT','iv.appraisal':'Appraisal Bars','iv.manual':'Exact IVs',
+    'stars.label':'TOTAL STARS','bar.atk':'ATTACK','bar.def':'DEFENSE','bar.sta':'STAMINA',
+    'eval.btn':'⚡ EVALUATE',
+    'catch.title':'SHOULD I CATCH IT?','catch.scan':'SCAN ENCOUNTER','catch.loading':'🔍 Analyzing image…',
+    'catch.upload':'Upload Screenshot','catch.change':'Change photo',
+    'catch.weather':'Weather Boosted?','catch.weatherSub':'Increases spawn level',
+    'catch.search.label':'QUICK SEARCH','catch.search.placeholder':'Search Pokémon...',
+    'box.title':'MY BOX','box.empty':'Evaluate to start!',
+    'meta.label':'META TIER LIST',
+    'v.hundo':'HUNDO! Invest to the max. 🔥','v.excellent':'Excellent. Worth full investment.',
+    'v.great':'Solid. Check PvP rankings below.','v.decent':'Wait for a better one unless urgent.',
+    'v.low':'Transfer candidate. Save Stardust.',
+    'combos':' possible combinations','iv.breakdown':'IV BREAKDOWN','cp.comp':'CP COMPARISON',
+    'pvp.rank':'PVP RANKING','verdict.lbl':'⚡ VERDICT','primal':'🔱 Primal Reversion available!',
+    'add.box':'📦 Add to Box','wild.notfound':'More Pokémon coming soon!',
+    'hundo.lbl':'If you see these CPs, it might be a Hundo!','wild.dust':'DUST','wild.candy':'CANDY',
+    'scan.err.server':'Server error'
+  }
+};
+let currentLang=localStorage.getItem('pokerank_lang')||'es';
+function t(k){return(LANG[currentLang]||LANG.es)[k]||k;}
+function translate(){
+  document.documentElement.lang=currentLang;
+  document.getElementById('header-desc').textContent=t('header.desc');
+  document.getElementById('lang-btn').textContent=currentLang==='es'?'EN':'ES';
+  document.getElementById('photo-loading').textContent=t('scan.loading');
+  document.getElementById('catch-loading').textContent=t('catch.loading');
+  document.getElementById('eval-btn').textContent=t('eval.btn');
+  document.getElementById('poke-search').placeholder=t('search.placeholder');
+  document.getElementById('current-cp').placeholder=t('cp.placeholder');
+  document.getElementById('catch-search').placeholder=t('catch.search.placeholder');
+  const navKeys=['nav.evaluate','nav.catch','nav.box','nav.meta'];
+  document.querySelectorAll('.nav button').forEach((b,i)=>b.textContent=t(navKeys[i]));
+  document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+  renderBars();renderBox();renderWild();
+}
+function toggleLang(){
+  currentLang=currentLang==='es'?'en':'es';
+  localStorage.setItem('pokerank_lang',currentLang);
+  translate();
+}
+
+// ═══ BOX STORAGE ═══
+function saveBox(){localStorage.setItem('pokerank_box',JSON.stringify(myBox));}
+function loadBox(){try{const s=localStorage.getItem('pokerank_box');if(s)myBox=JSON.parse(s);}catch(e){}}
+function deleteFromBox(id){myBox=myBox.filter(e=>e.id!==id);saveBox();renderBox();}
+
 // ═══ CPM ═══
 const CPM={1:.094,1.5:.1352,2:.16639787,2.5:.1926509,3:.21573247,3.5:.2365727,4:.25572005,4.5:.2735304,5:.29024988,5.5:.3060574,6:.3210876,6.5:.335445,7:.34921268,7.5:.3624578,8:.37523559,8.5:.3871178,9:.39956728,9.5:.4111936,10:.4092639,10.5:.4225,11:.43292641,11.5:.4431076,12:.45305996,12.5:.4627984,13:.47232164,13.5:.4816512,14:.49079138,14.5:.4997541,15:.50853168,15.5:.5171493,16:.52557439,16.5:.533856,17:.54194336,17.5:.5499021,18:.55770564,18.5:.5653766,19:.57291073,19.5:.5803074,20:.59740001,20.5:.6048188,21:.61215729,21.5:.6194041,22:.62656713,22.5:.6336492,23:.64065295,23.5:.647581,24:.65443563,24.5:.6612224,25:.667934,25.5:.6745819,26:.68116492,26.5:.6876849,27:.69414365,27.5:.7005429,28:.70688421,28.5:.7131691,29:.71939909,29.5:.7255756,30:.7317,30.5:.734741,31:.73776948,31.5:.7407856,32:.74378943,32.5:.7467812,33:.74976104,33.5:.7527291,34:.75568551,34.5:.7586304,35:.76156384,35.5:.7644861,36:.76739717,36.5:.7702973,37:.77318613,37.5:.7760645,38:.77893275,38.5:.7817901,39:.78463697,39.5:.7874736,40:.79030001,40.5:.7931164,41:.7959119,41.5:.798687,42:.8014417,42.5:.8041764,43:.8068913,43.5:.8095868,44:.8122632,44.5:.8149208,45:.8175599,45.5:.8201808,46:.8227838,46.5:.8253692,47:.8279374,47.5:.8304887,48:.8330233,48.5:.8355417,49:.838044,49.5:.8405306,50:.8430018,50.5:.8454578,51:.847899};
 function gc(l){return CPM[l]||.7903}
@@ -264,10 +348,12 @@ let myBox=[];
 
 // ═══ INIT ═══
 window.onload=function(){
+  loadBox();
   renderBars();
   renderWild();
   renderMeta();
   setStar(3);
+  translate();
 };
 
 // ═══ NAV ═══
@@ -342,11 +428,11 @@ async function handlePhoto(input){
     const compressed=await readAndCompress(file);
     prev.src=compressed;
     prev.style.display='block';
-    lbl.textContent='Cambiar foto';
+    lbl.textContent=t('scan.change');
     const b64=compressed.split(',')[1];
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
     const data=await res.json();
-    if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||'Error servidor');
+    if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'));
     // Apply results
     if(data.pokemon){
       const key=Object.keys(DB).find(k=>DB[k].n.toLowerCase().includes(data.pokemon.toLowerCase()));
@@ -379,11 +465,11 @@ async function handleCatchPhoto(input){
     const compressed=await readAndCompress(file);
     prev.src=compressed;
     prev.style.display='block';
-    lbl.textContent='Cambiar foto';
+    lbl.textContent=t('catch.change');
     const b64=compressed.split(',')[1];
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
     const data=await res.json();
-    if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||'Error servidor');
+    if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'));
     if(data.pokemon){
       document.getElementById('catch-search').value=data.pokemon;
       renderWild();
@@ -431,7 +517,7 @@ const BAR_OPTS=["empty","low","mid","high","full"];
 const BAR_LBLS=["None","Low","Mid","High","Max"];
 const BAR_FILL=[0,17,47,80,100];
 const BAR_COLORS={atk:"#EF4444",def:"#3B82F6",sta:"#22C55E"};
-const BAR_NAMES={atk:"ATAQUE",def:"DEFENSA",sta:"STAMINA"};
+const BAR_NAMES={atk:()=>t('bar.atk'),def:()=>t('bar.def'),sta:()=>t('bar.sta')};
 
 function renderBars(){
   ['atk','def','sta'].forEach(key=>{
@@ -441,7 +527,7 @@ function renderBars(){
     const fi=BAR_FILL[BAR_OPTS.indexOf(val)];
     el.innerHTML=`
       <div class="bar-wrap">
-        <div style="font-size:11px;font-weight:700;color:${color};font-family:ui-monospace,monospace;margin-bottom:4px">${BAR_NAMES[key]}</div>
+        <div style="font-size:11px;font-weight:700;color:${color};font-family:ui-monospace,monospace;margin-bottom:4px">${BAR_NAMES[key]()}</div>
         <div class="bar-track"><div class="bar-fill" style="width:${fi}%;background:${color}"></div></div>
         <div class="bar-btns">
           ${BAR_OPTS.map((o,i)=>`<button class="bar-btn${val===o?' active':''}" style="${val===o?`background:${color}20;border-color:${color};color:${color}`:''}" onclick="setBar('${key}','${o}')">${BAR_LBLS[i]}</button>`).join('')}
@@ -519,11 +605,11 @@ function evaluate(){
   const uR=m.mCP>2500?pvpRank(m,iA,iD,iS,'ultra'):null;
   const mR=pvpRank(m,iA,iD,iS,'master');
   let rec,recC;
-  if(v.label.includes('HUNDO')){rec="¡HUNDO! Inviértelo al máximo. 🔥";recC="#EF4444";}
-  else if(v.label==='Excellent'){rec="Excelente. Vale la inversión completa.";recC="#F59E0B";}
-  else if(v.label==='Great'){rec="Sólido. Comprueba rankings PvP abajo.";recC="#22C55E";}
-  else if(v.label==='Decent'){rec="Espera uno mejor salvo necesidad urgente.";recC="#3B82F6";}
-  else{rec="Candidato a transferir. Ahorra Stardust.";recC="#9CA3AF";}
+  if(v.label.includes('HUNDO')){rec=t('v.hundo');recC="#EF4444";}
+  else if(v.label==='Excellent'){rec=t('v.excellent');recC="#F59E0B";}
+  else if(v.label==='Great'){rec=t('v.great');recC="#22C55E";}
+  else if(v.label==='Decent'){rec=t('v.decent');recC="#3B82F6";}
+  else{rec=t('v.low');recC="#9CA3AF";}
   const tbl=[20,25,30,35,40,50].map(l=>({l,u:ccp(m.bA,m.bD,m.bS,iA,iD,iS,l),h:ccp(m.bA,m.bD,m.bS,15,15,15,l)}));
 
   const sec=document.getElementById('results-section');
@@ -535,10 +621,10 @@ function evaluate(){
       <div style="display:flex;justify-content:center;gap:5px;margin-bottom:10px">${m.t.map(t=>`<span class="badge" style="background:${TC[t]}">${t.toUpperCase()}</span>`).join('')}<span class="badge" style="background:${TIERC[m.tier]}">TIER ${m.tier}</span></div>
       <div style="font-size:42px;font-weight:900;color:${v.col};font-family:ui-monospace,monospace">${pct}%</div>
       <div style="display:inline-block;background:${v.col}22;border:1px solid ${v.col}40;border-radius:8px;padding:4px 16px;margin-top:6px"><span style="font-size:13px;font-weight:900;color:${v.col};font-family:ui-monospace,monospace">${v.label}</span></div>
-      ${isR?`<div style="margin-top:6px;font-size:10px;color:#94A3B8;font-family:ui-monospace,monospace">${combos.length} combinaciones posibles</div>`:''}
+      ${isR?`<div style="margin-top:6px;font-size:10px;color:#94A3B8;font-family:ui-monospace,monospace">${combos.length}${t('combos')}</div>`:''}
     </div>
     <div class="card">
-      <div class="label">DESGLOSE IV</div>
+      <div class="label">${t('iv.breakdown')}</div>
       ${[['ATK',iA,'#EF4444'],['DEF',iD,'#3B82F6'],['STA',iS,'#22C55E']].map(([l,val,c])=>`
         <div class="iv-bar-wrap">
           <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:${c};font-family:ui-monospace,monospace">${l}</span><span style="font-size:13px;font-weight:900;color:${val===15?'#EF4444':'#1E293B'};font-family:ui-monospace,monospace">${val}/15${val===15?' ★':''}</span></div>
@@ -546,7 +632,7 @@ function evaluate(){
         </div>`).join('')}
     </div>
     <div class="card">
-      <div class="label">COMPARACIÓN CP</div>
+      <div class="label">${t('cp.comp')}</div>
       ${tbl.map(r=>{const d=r.h-r.u;const isK=r.l===40||r.l===50;return`
         <div style="margin-bottom:8px;padding:${isK?'8px 10px':'4px 10px'};background:${isK?'rgba(254,243,199,.5)':'transparent'};border-radius:8px;border:${isK?'1px solid #FDE68A':'none'}">
           <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-weight:800;font-family:ui-monospace,monospace">Lv.${r.l}${r.l===40?' ⭐':r.l===50?' 👑':''}</span><span style="font-size:10px;color:${d===0?'#22C55E':'#EF4444'};font-weight:700;font-family:ui-monospace,monospace">${d===0?'✓ Match!':'−'+d+' CP'}</span></div>
@@ -555,7 +641,7 @@ function evaluate(){
         </div>`}).join('')}
     </div>
     <div class="card">
-      <div class="label">RANKING PVP</div>
+      <div class="label">${t('pvp.rank')}</div>
       <div class="league-boxes">
         ${gR?`<div class="league-box" style="border:2px solid ${rankColor(gR)}40"><div style="font-size:18px">🟢</div><div style="font-size:9px;color:#64748B;font-weight:700;font-family:ui-monospace,monospace">GREAT</div><div style="font-size:22px;font-weight:900;color:${rankColor(gR)};font-family:ui-monospace,monospace">#${gR}</div><div style="font-size:8px;color:${rankColor(gR)};font-weight:700">${rankTag(gR)}</div></div>`:''}
         ${uR?`<div class="league-box" style="border:2px solid ${rankColor(uR)}40"><div style="font-size:18px">🟡</div><div style="font-size:9px;color:#64748B;font-weight:700;font-family:ui-monospace,monospace">ULTRA</div><div style="font-size:22px;font-weight:900;color:${rankColor(uR)};font-family:ui-monospace,monospace">#${uR}</div><div style="font-size:8px;color:${rankColor(uR)};font-weight:700">${rankTag(uR)}</div></div>`:''}
@@ -563,16 +649,16 @@ function evaluate(){
       </div>
     </div>
     <div class="card" style="border:2px solid ${recC}30">
-      <div class="label">⚡ VEREDICTO</div>
+      <div class="label">${t('verdict.lbl')}</div>
       <p style="font-size:14px;font-weight:700;color:${recC};margin:0 0 10px;line-height:1.5">${rec}</p>
       <div class="label">MOVESET</div>
       <div style="background:#F8FAFC;border-radius:8px;padding:10px;font-size:11px;color:#475569;line-height:1.6;border:1px solid #E2E8F0">
         <span style="color:#F59E0B;font-weight:700">PvE:</span> ${m.pve}<br/>
         <span style="color:#3B82F6;font-weight:700">PvP:</span> ${m.pvp}
       </div>
-      ${m.primal?`<div style="margin-top:8px;padding:8px 12px;background:#FEF2F2;border-radius:8px;border:1px solid #FECACA"><span style="font-size:11px;color:#EF4444;font-weight:700">🔱 ¡Reversión Primordial disponible!</span></div>`:''}
+      ${m.primal?`<div style="margin-top:8px;padding:8px 12px;background:#FEF2F2;border-radius:8px;border:1px solid #FECACA"><span style="font-size:11px;color:#EF4444;font-weight:700">${t('primal')}</span></div>`:''}
     </div>
-    <button class="btn-main" onclick="addToBox(${JSON.stringify({key:selectedKey,iA,iD,iS,pct,vLabel:v.label,vCol:v.col,cp40}).replace(/"/g,'&quot;')})">📦 Añadir al Box</button>
+    <button class="btn-main" onclick="addToBox(${JSON.stringify({key:selectedKey,iA,iD,iS,pct,vLabel:v.label,vCol:v.col,cp40}).replace(/"/g,'&quot;')})">${t('add.box')}</button>
   `;
   sec.scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -584,19 +670,21 @@ function rankTag(r){return r===1?"#1!":r<=10?"Top 10":r<=50?"Top 50":r<=200?"Via
 function addToBox(data){
   const m=DB[data.key];
   myBox.unshift({...data,n:m.n,e:m.e,t:m.t,id:Date.now()});
+  saveBox();
   renderBox();
   showTab('box');
 }
 
 function renderBox(){
-  document.getElementById('box-label').textContent=`MI BOX (${myBox.length})`;
+  document.getElementById('box-label').textContent=`${t('box.title')} (${myBox.length})`;
   const el=document.getElementById('box-list');
-  if(!myBox.length){el.innerHTML=`<div class="card" style="text-align:center;padding:36px 20px"><div style="font-size:44px;opacity:.4">📦</div><p style="color:#94A3B8;font-size:13px;margin:8px 0 0">Vacío. ¡Evalúa para empezar!</p></div>`;return;}
+  if(!myBox.length){el.innerHTML=`<div class="card" style="text-align:center;padding:36px 20px"><div style="font-size:44px;opacity:.4">📦</div><p style="color:#94A3B8;font-size:13px;margin:8px 0 0">${t('box.empty')}</p></div>`;return;}
   el.innerHTML=myBox.map(e=>`
     <div class="card" style="display:flex;align-items:center;gap:10px;padding:12px">
       <span style="font-size:28px">${e.e}</span>
       <div style="flex:1"><div style="font-weight:800;font-size:14px">${e.n}</div><div style="font-size:11px;color:#94A3B8;font-family:ui-monospace,monospace">${e.iA}/${e.iD}/${e.iS} · CP ${e.cp40}</div></div>
       <div style="text-align:right"><div style="font-size:17px;font-weight:900;color:${e.vCol};font-family:ui-monospace,monospace">${e.pct}%</div><div style="font-size:9px;color:${e.vCol};font-weight:700">${e.vLabel}</div></div>
+      <button class="del-btn" onclick="deleteFromBox(${e.id})" title="Eliminar">✕</button>
     </div>`).join('');
 }
 
@@ -611,7 +699,7 @@ function renderWild(){
   const q=(document.getElementById('catch-search')||{value:''}).value.toLowerCase();
   const list=document.getElementById('wild-list');
   const filtered=WILD.filter(p=>p.n.toLowerCase().includes(q));
-  if(!filtered.length){list.innerHTML=`<div class="card" style="text-align:center;padding:24px"><div style="font-size:32px;opacity:.4">🔍</div><p style="color:#94A3B8;font-size:12px;margin:8px 0 0">No encontrado. ¡Más Pokémon próximamente!</p></div>`;return;}
+  if(!filtered.length){list.innerHTML=`<div class="card" style="text-align:center;padding:24px"><div style="font-size:32px;opacity:.4">🔍</div><p style="color:#94A3B8;font-size:12px;margin:8px 0 0">${t('wild.notfound')}</p></div>`;return;}
   list.innerHTML=filtered.map(p=>{
     const h20=ccp(p.bA,p.bD,p.bS,15,15,15,20);
     const h25=ccp(p.bA,p.bD,p.bS,15,15,15,25);
@@ -628,12 +716,13 @@ function renderWild(){
       <div class="verdict-box" style="background:${p.col}15;border:1px solid ${p.col}30"><span style="font-size:12px;font-weight:700;color:${p.col}">${p.verdict}</span></div>
       <div class="hundo-box">
         <div style="font-size:9px;color:#92400E;font-weight:700;letter-spacing:1px;margin-bottom:6px;font-family:ui-monospace,monospace">💯 HUNDO CP — ${weatherOn?'WEATHER BOOSTED':'NORMAL'}</div>
+
         <div class="hundo-grid">${cells.map(x=>`<div class="hundo-cell"><div style="font-size:8px;color:#92400E;font-family:ui-monospace,monospace;font-weight:700">${x.l}</div><div style="font-size:14px;font-weight:900;color:#B45309;font-family:ui-monospace,monospace">${x.cp}</div></div>`).join('')}</div>
-        <div style="font-size:9px;color:#92400E;margin-top:6px">Si ves estos CP, ¡podría ser un Hundo!</div>
+        <div style="font-size:9px;color:#92400E;margin-top:6px">${t('hundo.lbl')}</div>
       </div>
       <div class="stat-row">
-        <div class="stat-box"><div style="font-size:8px;color:#94A3B8;font-family:ui-monospace,monospace">POLVO</div><div style="font-size:12px;font-weight:800;color:#D97706;font-family:ui-monospace,monospace">${p.dust}</div></div>
-        <div class="stat-box"><div style="font-size:8px;color:#94A3B8;font-family:ui-monospace,monospace">CARAMELO</div><div style="font-size:12px;font-weight:800;color:#7C3AED;font-family:ui-monospace,monospace">${p.candy}</div></div>
+        <div class="stat-box"><div style="font-size:8px;color:#94A3B8;font-family:ui-monospace,monospace">${t('wild.dust')}</div><div style="font-size:12px;font-weight:800;color:#D97706;font-family:ui-monospace,monospace">${p.dust}</div></div>
+        <div class="stat-box"><div style="font-size:8px;color:#94A3B8;font-family:ui-monospace,monospace">${t('wild.candy')}</div><div style="font-size:12px;font-weight:800;color:#7C3AED;font-family:ui-monospace,monospace">${p.candy}</div></div>
         <div class="stat-box"><div style="font-size:8px;color:#94A3B8;font-family:ui-monospace,monospace">PVP</div><div style="font-size:10px;font-weight:800;color:${p.pvp.length?'#22C55E':'#CBD5E1'};font-family:ui-monospace,monospace">${p.pvp.length?p.pvp.join('/'):'-'}</div></div>
       </div>
     </div>`;
