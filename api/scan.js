@@ -2,21 +2,25 @@
 let _cachedModels = null;
 let _cacheTs = 0;
 
-const PROMPT = `You are analyzing a Pokemon GO screenshot showing a Pokemon's appraisal screen.
+const PROMPT = `Analyze this Pokemon GO screenshot. Extract the appraisal data.
 
-Extract these values carefully:
-- "pokemon": the Pokemon name shown on screen
-- "cp": the CP/PC integer number shown at the top (e.g. 2297). Read it precisely from the digits shown.
-- "stars": count the GOLD filled stars in the appraisal medal/badge (0, 1, 2, or 3)
-- "atk_bar": look at the ATTACK (Ataque) horizontal bar in the appraisal popup. Estimate fill: "empty"=bar empty, "low"=~1/4 full, "mid"=~half full, "high"=~3/4 full, "full"=completely filled
-- "def_bar": same for the DEFENSE (Defensa) bar
-- "sta_bar": same for the STAMINA/HP (PS) bar
-- "is_encounter": false if owned Pokemon, true if wild encounter before catching
+STEP 1 - Pokemon name: read the name shown below the Pokemon image.
 
-IMPORTANT: Do NOT copy the example values. Read the actual values from the image.
+STEP 2 - CP: read the large number shown next to "PC" or "CP" at the top of the screen. Return as integer.
 
-Reply ONLY with a JSON object, no explanation, no markdown:
-{"pokemon":"<name>","cp":<number>,"stars":<0-3>,"atk_bar":"<empty|low|mid|high|full>","def_bar":"<empty|low|mid|high|full>","sta_bar":"<empty|low|mid|high|full>","is_encounter":false}`;
+STEP 3 - Stars: find the circular appraisal badge/medal (gold/orange circle with star shapes). Count ONLY the SOLID FILLED gold stars inside it, NOT hollow or grey ones. The badge can show 0, 1, 2, or 3 filled stars.
+
+STEP 4 - IV bars: find the appraisal panel with 3 labeled horizontal orange bars (Attack/Ataque, Defense/Defensa, Stamina/PS). For each bar estimate how full the orange fill is:
+  "empty" = bar is completely empty (0%)
+  "low"   = bar is about 1/4 full
+  "mid"   = bar is about 1/2 full
+  "high"  = bar is about 3/4 full
+  "full"  = bar is completely full (100%)
+
+WARNING: Each bar is DIFFERENT. Do not return the same value for all three. Look carefully at each one individually.
+
+Respond with ONLY a JSON object, no text before or after:
+{"pokemon":"<name>","cp":<integer>,"stars":<0|1|2|3>,"atk_bar":"<empty|low|mid|high|full>","def_bar":"<empty|low|mid|high|full>","sta_bar":"<empty|low|mid|high|full>","is_encounter":false}`;
 
 // Fallback list in case the models API call fails
 const FALLBACK_MODELS = [
