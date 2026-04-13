@@ -18,6 +18,13 @@ Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail poi
 
 Return ONLY this JSON: {"weather_boosted": true} if you see this white circle with a kite, or {"weather_boosted": false} if you do not see it.`;
 
+const PROMPT_BARS = `This is a zoomed crop of a Pokemon GO appraisal panel showing 3 horizontal IV bars.
+The bars appear top to bottom: Ataque/Attack, Defensa/Defense, PS/Stamina.
+Each bar fills left-to-right with orange/amber. Two gap marks split it into 3 equal thirds (each third = 5 IVs).
+Estimate each bar's fill level as an integer 0-15:
+  empty=0, 1st gap mark=5, 2nd gap mark=10, full=15.
+Return ONLY: {"atk_iv": N, "def_iv": N, "sta_iv": N}`;
+
 const PROMPT_WILD = `Analyze this Pokemon GO screenshot showing a wild Pokemon encounter screen.
 
 STEP 1 - pokemon: read the Pokemon name shown in the dark banner in the center of the screen (e.g. "Hoppip", "Pikachu", "Kyogre").
@@ -36,22 +43,7 @@ STEP 2 - cp: read the large number next to "PC" or "CP" at the top. Return as in
 
 STEP 3 - stars: find the circular appraisal badge/medal. Count ONLY the SOLID FILLED gold stars (ignore hollow/grey stars). Return 0, 1, 2, or 3.
 
-STEP 4 - IV bars: find the 3 horizontal bars labeled Ataque/Attack, Defensa/Defense, PS/Stamina in the appraisal panel.
-Each bar fills from left to right with orange/amber color. Two small gap marks divide it into 3 equal thirds.
-Each third represents exactly 5 IVs. Estimate where the orange fill ends:
-  - Bar empty = 0
-  - Orange just started in 1st third = 1-4
-  - Orange exactly at 1st gap mark = 5
-  - Orange halfway through 2nd third = 7-8
-  - Orange exactly at 2nd gap mark = 10
-  - Orange deep in 3rd third = 13-14
-  - Bar completely full = 15
-Return the estimated IV as an integer 0-15 for each bar.
-CRITICAL: examine each bar independently. Do NOT assume they are equal.
-
-STEP 5 - is_encounter: false if owned Pokemon, true if wild encounter.
-
-Return a JSON object with keys: pokemon, cp, stars, atk_iv, def_iv, sta_iv, is_encounter.`;
+Return a JSON object with keys: pokemon, cp, stars.`;
 
 function extractJSON(txt) {
   const cleaned = txt
@@ -211,7 +203,8 @@ module.exports = async function handler(req, res) {
     const { image, mediaType, mode } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    const prompt = mode === "bar_single" ? PROMPT_BAR_SINGLE
+    const prompt = mode === "bars" ? PROMPT_BARS
+      : mode === "bar_single" ? PROMPT_BAR_SINGLE
       : mode === "weather" ? PROMPT_WEATHER
       : mode === "wild" ? PROMPT_WILD
       : PROMPT;

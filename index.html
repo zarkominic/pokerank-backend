@@ -469,12 +469,17 @@ async function handlePhoto(input){
   loading.style.display='block';
 
   try{
-    const compressed=await readAndCompress(file);
+    const [compressed, ivCrop] = await Promise.all([readAndCompress(file), cropIVPanel(file)]);
     prev.src=compressed;
     prev.style.display='block';
     lbl.textContent=t('scan.change');
     const b64=compressed.split(',')[1];
-    const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'appraisal'})});
+    const b64iv=ivCrop.split(',')[1];
+    // Two parallel calls: simple appraisal (name/cp/stars) + focused bars crop
+    const [res, barsRes] = await Promise.all([
+      fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'appraisal'})}),
+      fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64iv,mediaType:'image/jpeg',mode:'bars'})})
+    ]);
     const data=await res.json();
     if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
     if(data.pokemon){
@@ -487,11 +492,13 @@ async function handlePhoto(input){
       document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
       document.getElementById('stars-row').style.display='flex';
     }
-    // IV bars: API returns estimated 0-15 integer directly
-    const clampIV=v=>Math.min(15,Math.max(0,Math.round(Number(v))));
-    if(data.atk_iv!=null)setSlider('atk',clampIV(data.atk_iv));
-    if(data.def_iv!=null)setSlider('def',clampIV(data.def_iv));
-    if(data.sta_iv!=null)setSlider('sta',clampIV(data.sta_iv));
+    if(barsRes.ok){
+      const bd=await barsRes.json();
+      const clampIV=v=>Math.min(15,Math.max(0,Math.round(Number(v))));
+      if(bd.atk_iv!=null)setSlider('atk',clampIV(bd.atk_iv));
+      if(bd.def_iv!=null)setSlider('def',clampIV(bd.def_iv));
+      if(bd.sta_iv!=null)setSlider('sta',clampIV(bd.sta_iv));
+    }
     // Auto evaluate
     setTimeout(evaluate,400);
   }catch(e){
@@ -542,6 +549,25 @@ async function handleCatchPhoto(input){
   loading.style.display='none';
 }
 
+
+// Crop the IV bar panel: left 52%, y 62-90%, scaled 5x
+function cropIVPanel(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const sx=0,sy=Math.floor(img.height*0.62),sw=Math.floor(img.width*0.52),sh=Math.floor(img.height*0.28);
+        const canvas=document.createElement('canvas');
+        canvas.width=sw*5; canvas.height=sh*5;
+        canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.92));
+      };
+      img.onerror=reject; img.src=ev.target.result;
+    };
+    reader.onerror=reject; reader.readAsDataURL(file);
+  });
+}
 
 // Crop and zoom the banner area (top 20-50% of image) where name/CP lives
 function cropBanner(file){
