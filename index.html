@@ -496,12 +496,13 @@ async function handlePhoto(input){
       document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
       document.getElementById('stars-row').style.display='flex';
     }
-    // Apply IV bars from zoomed crop (returns 0-15 integers directly)
+    // Apply IV bars from zoomed crop
+    const BAR_IV={empty:0,low:3,mid:7,high:11,full:15};
     if(barsRes.ok){
       const bd=await barsRes.json();
-      if(bd.atk_iv!=null)setSlider('atk',Math.min(15,Math.max(0,Math.round(bd.atk_iv))));
-      if(bd.def_iv!=null)setSlider('def',Math.min(15,Math.max(0,Math.round(bd.def_iv))));
-      if(bd.sta_iv!=null)setSlider('sta',Math.min(15,Math.max(0,Math.round(bd.sta_iv))));
+      if(bd.atk_bar&&BAR_IV[bd.atk_bar]!==undefined)setSlider('atk',BAR_IV[bd.atk_bar]);
+      if(bd.def_bar&&BAR_IV[bd.def_bar]!==undefined)setSlider('def',BAR_IV[bd.def_bar]);
+      if(bd.sta_bar&&BAR_IV[bd.sta_bar]!==undefined)setSlider('sta',BAR_IV[bd.sta_bar]);
     }
     // Auto evaluate
     setTimeout(evaluate,400);
