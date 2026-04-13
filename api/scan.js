@@ -1,7 +1,7 @@
 const MODELS = [
-  "gemini-2.5-flash",
+  "gemini-2.5-flash-preview-04-17",
+  "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
 ];
 
 const PROMPT = `Analyze this Pokemon GO screenshot showing a Pokemon's appraisal screen.
@@ -121,7 +121,7 @@ module.exports = async function handler(req, res) {
     const keys = getApiKeys();
     if (keys.length === 0) return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
 
-    let lastError = "";
+    const errors = [];
 
     for (const model of MODELS) {
       // Try each model — on overload rotate through all keys before giving up
@@ -131,7 +131,7 @@ module.exports = async function handler(req, res) {
           const result = await callGemini(model, image, mediaType, apiKey);
           return res.status(200).json(result);
         } catch (err) {
-          lastError = err.message;
+          errors.push(`[${model}] ${err.message}`);
           if (err.isUnavailable) break; // Skip to next model immediately
           if (err.isOverload) {
             // Brief pause between key rotations, longer after full cycle
@@ -144,7 +144,10 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    return res.status(503).json({ error: "Service temporarily unavailable. Please try again in a moment." });
+    return res.status(503).json({
+      error: "Service temporarily unavailable. Please try again in a moment.",
+      details: errors
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

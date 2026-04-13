@@ -394,7 +394,7 @@ async function handlePhoto(input){
     const b64=compressed.split(',')[1];
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
     const data=await res.json();
-    if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'));
+    if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
     // Bar → exact IV conversion (midpoint of each range)
     const BAR_IV={empty:0,low:3,mid:8,high:12,full:15};
     // Apply results
@@ -437,7 +437,7 @@ async function handleCatchPhoto(input){
     const b64=compressed.split(',')[1];
     const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg'})});
     const data=await res.json();
-    if(!res.ok)throw new Error(typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'));
+    if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
     if(data.pokemon){
       document.getElementById('catch-search').value=data.pokemon;
       renderWild();
