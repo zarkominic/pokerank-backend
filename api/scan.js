@@ -5,7 +5,8 @@ const GEMINI_MODELS = [
 
 const GROQ_MODELS = [
   "meta-llama/llama-4-scout-17b-16e-instruct",
-  "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "llama-3.2-90b-vision-preview",
+  "llama-3.2-11b-vision-preview",
 ];
 
 const PROMPT_BAR_SINGLE = `This image shows a single horizontal bar from a Pokemon GO appraisal screen, zoomed in.
@@ -110,8 +111,7 @@ async function callGemini(model, image, mediaType, apiKey, prompt) {
           maxOutputTokens: 300,
           temperature: 0,
           responseMimeType: "application/json"
-        },
-        thinkingConfig: { thinkingBudget: 0 }
+        }
       })
     },
     6000 // 6s per Gemini attempt
