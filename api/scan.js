@@ -8,21 +8,18 @@ const GROQ_MODELS = [
   "meta-llama/llama-4-maverick-17b-128e-instruct",
 ];
 
-const PROMPT_BARS = `This is a zoomed crop of a Pokemon GO appraisal panel with 3 bars: Ataque (top), Defensa (middle), PS (bottom).
+const PROMPT_BARS = `This is a zoomed crop of a Pokemon GO appraisal panel with 3 horizontal bars labeled Ataque (top), Defensa (middle), PS (bottom).
 
-Each bar has exactly 3 sections separated by small gaps. Each section is either ORANGE (filled) or GREY (empty).
+Each bar is a horizontal rectangle divided into 3 sections by small gaps.
+A section is FILLED if it has ANY color: orange, amber, red, pink, salmon, or coral.
+A section is EMPTY if it is light grey or white.
 
-For each bar, answer whether each section contains orange color (true) or is grey (false):
+For each bar, look at each of the 3 sections from LEFT to RIGHT and answer true (filled/colored) or false (grey/empty).
 
-Return ONLY this JSON:
-{
-  "atk": [bool, bool, bool],
-  "def": [bool, bool, bool],
-  "sta": [bool, bool, bool]
-}
+Return ONLY:
+{"atk": [bool, bool, bool], "def": [bool, bool, bool], "sta": [bool, bool, bool]}
 
-Where each array is [section1_has_orange, section2_has_orange, section3_has_orange] from left to right.
-Be precise — grey sections must be false even if adjacent to orange ones.`;
+Important: the bars for Defensa and PS may appear RED or PINK rather than orange — these are still FILLED (true).`;
 const PROMPT_WEATHER = `This is a zoomed grayscale crop of a Pokemon GO wild encounter banner showing the Pokemon name and CP number.
 
 Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail pointing down) inside it. This circle appears directly above the last digit of the CP number.
