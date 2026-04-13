@@ -14,7 +14,7 @@ STEP 1 - pokemon: read the Pokemon name shown in the dark banner in the center o
 
 STEP 2 - cp: read the number next to "PC" or "CP" shown in that same banner. Return as integer only.
 
-STEP 3 - weather_boosted: In the dark banner that shows the Pokemon name and CP, look to the LEFT of the Pokemon name. If there is a small circular icon (a circle with a border/ring, containing any symbol inside), the Pokemon IS weather boosted — return true. If there is no such circular icon to the left of the name, return false.
+STEP 3 - weather_boosted: Pokemon GO shows a small weather icon (sun, wind swirl, raindrop, snowflake, clouds, etc.) somewhere on the encounter screen when the Pokemon is weather boosted. This icon typically appears near or above the CP number or next to the Pokemon name. Scan the ENTIRE image for any weather-related symbol. Return true if you see one, false if the screen shows no weather symbol at all.
 
 Return a JSON object with keys: pokemon, cp, weather_boosted.`;
 
