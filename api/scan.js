@@ -31,7 +31,7 @@ CRITICAL: Examine each bar INDEPENDENTLY. They will likely have DIFFERENT values
 
 STEP 5 - is_encounter: false if owned Pokemon, true if wild encounter.
 
-STEP 6 - weather_boosted: look for a weather icon (swirl, wind spiral, cloud, sun, raindrop, snowflake, or any weather symbol) displayed near or above the CP number. This icon only appears in wild encounters when the Pokemon is weather boosted. Return true if the icon is visible, false otherwise.
+STEP 6 - weather_boosted: in wild encounter screens, look for a small CIRCULAR ICON with a visible ring/border displayed near the CP number (usually to the left or above it). This circle contains a weather symbol inside and indicates weather boost. If you see this circular bordered icon near the CP, return true. If there is no such circle, return false.
 
 Return a JSON object with keys: pokemon, cp, stars, atk_bar, def_bar, sta_bar, is_encounter, weather_boosted.`;
 
