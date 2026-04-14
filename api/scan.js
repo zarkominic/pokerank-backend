@@ -24,7 +24,16 @@ Apply this measurement logic:
 1. The maximum value per bar is 15.
 2. Each bar is divided into 3 equal sections. Each full section = 5 points.
 3. If the bar is entirely RED/CRIMSON color, the value is exactly 15.
-4. If the bar is ORANGE, count the fully filled sections (×5 each) and estimate the last partial section: ~20%→+1, ~40%→+2, ~60%→+3, ~80%→+4.
+4. If the bar is ORANGE:
+   a) Count how many sections are 100% full → multiply by 5.
+   b) Look at the NEXT section (the first one that is NOT completely full):
+      - Empty (0%) → +0
+      - Small fill (~20%) → +1
+      - Less than half (~40%) → +2
+      - About half (~60%) → +3
+      - Most of it filled with a small gap remaining (~80%) → +4
+   c) Total = (full sections × 5) + partial estimate.
+   IMPORTANT: A section that is ALMOST full but has a visible gap at the end = ~80% = +4, not a full section.
 
 CRITICAL: Each bar has its OWN independent value. Do NOT copy values between bars.
 

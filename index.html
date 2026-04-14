@@ -466,11 +466,12 @@ function cropBarPanel(file){
       const img=new Image();
       img.onload=()=>{
         const sx=0, sy=Math.floor(img.height*0.58);
-        const sw=Math.floor(img.width*0.56), sh=Math.floor(img.height*0.34);
-        // Scale up 2× so Gemini can see the bar sections clearly
+        // Wider crop (65%) so empty bar sections are fully visible after the fill
+        const sw=Math.floor(img.width*0.65), sh=Math.floor(img.height*0.34);
+        // Scale up 3× so Gemini can clearly see fill boundaries
         const canvas=document.createElement('canvas');
-        canvas.width=sw*2; canvas.height=sh*2;
-        canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw*2,sh*2);
+        canvas.width=sw*3; canvas.height=sh*3;
+        canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw*3,sh*3);
         resolve(canvas.toDataURL('image/jpeg',0.92).split(',')[1]);
       };
       img.onerror=reject; img.src=ev.target.result;
