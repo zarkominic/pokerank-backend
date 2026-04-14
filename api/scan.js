@@ -18,19 +18,27 @@ Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail poi
 
 Return ONLY this JSON: {"weather_boosted": true} if you see this white circle with a kite, or {"weather_boosted": false} if you do not see it.`;
 
-const PROMPT_BARS = `You are analyzing a cropped image of a Pokemon GO appraisal panel showing 3 horizontal IV bars labeled (top to bottom): Ataque/Attack, Defensa/Defense, PS/Stamina.
+const PROMPT_BARS = `You are a UI analysis expert. Analyze this cropped image of a Pokemon GO appraisal panel.
 
-Focus ONLY on the white panel in the lower-left containing those 3 bars. Ignore everything else.
+STEP 1 — LOCATE: Focus EXCLUSIVELY on the white rectangular box in the lower-left area containing the stat bars labeled 'Ataque' (top), 'Defensa' (middle), and 'PS' (bottom). Ignore the Pokemon image and everything outside that box.
 
-Rules:
-1. Each bar's maximum value is 15.
-2. Each bar is divided into 3 equal sections by small gap marks. Each section = 5 points.
-3. RULE FOR RED: If a bar is entirely dark red/crimson color, its value is exactly 15.
-4. RULE FOR ORANGE: If a bar is orange, count fully filled sections (×5), then estimate the partial last section: ~20% filled=1pt, ~40%=2pt, ~60%=3pt, ~80%=4pt.
-5. Examine each bar INDEPENDENTLY — they will have different values.
+STEP 2 — MEASURE each bar using these rules in order:
 
-Return ONLY valid JSON, no extra text:
-{"atk_iv": <0-15>, "def_iv": <0-15>, "sta_iv": <0-15>}`;
+RULE 1 (Red = max): If the bar fill color is entirely dark red or crimson (not orange), the value is exactly 15. Apply this rule first.
+
+RULE 2 (Orange = count sections): If the bar is orange:
+  a) Count how many of the 3 sections are 100% full. Each full section = 5 points.
+  b) Look at the next partially-filled section and estimate:
+       ~20% filled → +1 point
+       ~40% filled → +2 points
+       ~60% filled → +3 points
+       ~80% filled → +4 points
+  c) Add a + b for the final value.
+
+STEP 3 — CRITICAL: Examine each bar INDEPENDENTLY. They will have different values. Do NOT assume they are equal or copy values between bars.
+
+Return ONLY this JSON with no additional text:
+{"atk_iv": <integer 0-15>, "def_iv": <integer 0-15>, "sta_iv": <integer 0-15>}`;
 
 const PROMPT_WILD = `Analyze this Pokemon GO screenshot showing a wild Pokemon encounter screen.
 
