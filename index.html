@@ -647,13 +647,6 @@ function analyzeIVBars(file){
     reader.onerror=reject; reader.readAsDataURL(file);
   });
 }
-        resolve(ivs);
-      };
-      img.onerror=reject; img.src=ev.target.result;
-    };
-    reader.onerror=reject; reader.readAsDataURL(file);
-  });
-}
 
 // Crop and zoom the banner area (top 20-50% of image) where name/CP lives
 function cropBanner(file){
