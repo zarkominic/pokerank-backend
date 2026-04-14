@@ -555,14 +555,14 @@ function analyzeIVBars(file){
     reader.onload=ev=>{
       const img=new Image();
       img.onload=()=>{
-        const sx=0, sy=Math.floor(img.height*0.62);
-        const sw=Math.floor(img.width*0.52), sh=Math.floor(img.height*0.28);
+        // Slightly wider/taller crop to be generous
+        const sx=0, sy=Math.floor(img.height*0.58);
+        const sw=Math.floor(img.width*0.56), sh=Math.floor(img.height*0.34);
         const canvas=document.createElement('canvas');
         canvas.width=sw; canvas.height=sh;
         canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
         const px=canvas.getContext('2d').getImageData(0,0,sw,sh).data;
 
-        // HSV conversion — more robust than raw RGB ratios against JPEG artifacts
         function toHSV(r,g,b){
           r/=255; g/=255; b/=255;
           const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
@@ -575,71 +575,88 @@ function analyzeIVBars(file){
           }
           return {h, s:max>0?d/max:0, v:max};
         }
-        // Orange: hue 15-45°, decent saturation & brightness
-        const isOrange=(r,g,b)=>{const {h,s,v}=toHSV(r,g,b); return h>=15&&h<=45&&s>0.35&&v>0.40;};
-        // Red/crimson (IVs > 10): hue 0-15° or 345-360°, saturated
-        const isRed=(r,g,b)=>{const {h,s,v}=toHSV(r,g,b); return (h<=15||h>=345)&&s>0.35&&v>0.40;};
+        // Looser thresholds to survive JPEG compression
+        const isOrange=(r,g,b)=>{const {h,s,v}=toHSV(r,g,b); return h>=10&&h<=55&&s>0.28&&v>0.30;};
+        const isRed=(r,g,b)=>{const {h,s,v}=toHSV(r,g,b); return (h<=20||h>=340)&&s>0.28&&v>0.30;};
         const isFill=(r,g,b)=>isOrange(r,g,b)||isRed(r,g,b);
 
-        // Skip first 30% of width — label area ("Ataque", "Defensa", "PS" orange text)
+        // Skip label area (~30% of cropped width)
         const xBar=Math.floor(sw*0.30);
-        const barW=sw-xBar;
+        const scanW=sw-xBar;
 
-        // Per-row fill density to locate the 3 bar bands
-        const density=new Float32Array(sh);
+        // Row density to find 3 bar bands
+        const rowDens=new Float32Array(sh);
         for(let y=0;y<sh;y++){
           let cnt=0;
           for(let x=xBar;x<sw;x++){
             const i=(y*sw+x)*4;
             if(isFill(px[i],px[i+1],px[i+2]))cnt++;
           }
-          density[y]=cnt/barW;
+          rowDens[y]=cnt/scanW;
         }
 
-        // Find contiguous row bands with density > 10%
         const regions=[];
         let s=-1;
         for(let y=0;y<sh;y++){
-          if(density[y]>0.10 && s<0) s=y;
-          else if(density[y]<=0.10 && s>=0){regions.push([s,y-1]);s=-1;}
+          if(rowDens[y]>0.08&&s<0) s=y;
+          else if(rowDens[y]<=0.08&&s>=0){regions.push([s,y-1]);s=-1;}
         }
         if(s>=0) regions.push([s,sh-1]);
-
-        // Take 3 tallest regions sorted top-to-bottom (ATK, DEF, STA)
         regions.sort((a,b)=>(b[1]-b[0])-(a[1]-a[0]));
         const bars=regions.slice(0,3).sort((a,b)=>a[0]-b[0]);
+        if(!bars.length){resolve([0,0,0]);return;}
 
-        const ivs=bars.map(([y0,y1])=>{
-          const barH=y1-y0+1;
-
-          // Gemini Rule 1: count red vs orange pixels
-          // If bar is predominantly red (dark crimson) → IV = 15
-          let redPx=0, orangePx=0;
-          for(let y=y0;y<=y1;y++){
-            for(let x=xBar;x<sw;x++){
-              const i=(y*sw+x)*4;
-              const r=px[i],g=px[i+1],b=px[i+2];
-              if(isRed(r,g,b)) redPx++;
-              else if(isOrange(r,g,b)) orangePx++;
-            }
-          }
-          if(redPx+orangePx>0 && redPx/(redPx+orangePx)>0.55) return 15;
-
-          // Gemini Rules 2+3: find rightmost filled column (majority vote ≥45%)
-          // fill fraction → 0-15 value
-          let rightFilled=-1;
+        // Per-bar column fill-density profile
+        function getProfile(y0,y1){
+          const bH=y1-y0+1, arr=[];
           for(let x=xBar;x<sw;x++){
-            let cnt=0;
-            for(let y=y0;y<=y1;y++){
-              const i=(y*sw+x)*4;
-              if(isFill(px[i],px[i+1],px[i+2]))cnt++;
-            }
-            if(cnt/barH>=0.45) rightFilled=x;
+            let c=0;
+            for(let y=y0;y<=y1;y++){const i=(y*sw+x)*4; if(isFill(px[i],px[i+1],px[i+2]))c++;}
+            arr.push(c/bH);
           }
-          if(rightFilled<0) return 0;
-          return Math.min(15,Math.round(((rightFilled-xBar)/barW)*15));
+          return arr;
+        }
+
+        // Find fill boundaries and the first inter-section gap
+        // Gap = density dip <15% flanked by fill >25% on both sides
+        // sW = distance from left fill edge to first gap = one section's pixel width
+        function parseProfile(prof){
+          let L=-1,R=-1;
+          for(let i=0;i<prof.length;i++) if(prof[i]>=0.25){if(L<0)L=i;R=i;}
+          if(L<0) return {L:-1,R:-1,sW:-1};
+          for(let i=L+2;i<R-2;i++){
+            if(prof[i]<0.15){
+              const hasPrev=prof.slice(Math.max(0,i-4),i).some(v=>v>0.25);
+              const hasNext=prof.slice(i+1,Math.min(prof.length,i+5)).some(v=>v>0.25);
+              if(hasPrev&&hasNext) return {L,R,sW:i-L};
+            }
+          }
+          return {L,R,sW:-1};
+        }
+
+        const profs=bars.map(([y0,y1])=>getProfile(y0,y1));
+        const pData=profs.map(parseProfile);
+
+        // Cross-bar calibration: average sW from any bar that found a gap
+        const sWs=pData.filter(p=>p.sW>4).map(p=>p.sW);
+        const calibSW=sWs.length?Math.round(sWs.reduce((a,b)=>a+b)/sWs.length):-1;
+        console.log('[IV] calibSW='+calibSW+' data='+pData.map(p=>p.L+'-'+p.R+'/sW='+p.sW));
+
+        const ivs=bars.map((_,idx)=>{
+          const {L,R,sW}=pData[idx];
+          if(L<0) return 0;
+          // Use this bar's section width or cross-calibrated value
+          const eff=sW>4?sW:calibSW>4?calibSW:-1;
+          if(eff>4){
+            // Full bar = 3 sections; fill fraction directly gives IV
+            return Math.min(15,Math.round(((R-L+1)/(3*eff))*15));
+          }
+          // Fallback: assume bar fills at most 70% of scanW
+          return Math.min(15,Math.round(((R-L+1)/(scanW*0.70))*15));
         });
+
         while(ivs.length<3) ivs.push(0);
+        console.log('[IV] result='+ivs);
         resolve(ivs);
       };
       img.onerror=reject; img.src=ev.target.result;
