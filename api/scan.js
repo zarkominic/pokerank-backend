@@ -50,15 +50,22 @@ STEP 3 - weather_boosted: find the CP number (e.g. "502" or "146"). Look directl
 
 Return a JSON object with keys: pokemon, cp, weather_boosted.`;
 
-const PROMPT = `Analyze this Pokemon GO screenshot showing a Pokemon's appraisal screen.
+const PROMPT = `Eres un experto en análisis de capturas de pantalla del juego Pokémon GO.
 
-STEP 1 - pokemon: read the Pokemon name shown below its image.
+PARTE 1 - Datos básicos:
+- pokemon: el nombre del Pokémon que aparece en la pantalla
+- cp: el número junto a "PC" o "CP" (solo el entero)
+- stars: cuenta SOLO las estrellas doradas RELLENAS en la medalla circular (ignora las huecas/grises). Devuelve 0, 1, 2 o 3.
 
-STEP 2 - cp: read the large number next to "PC" or "CP" at the top. Return as integer only.
+PARTE 2 - Barras de IV (en el recuadro blanco de la esquina inferior izquierda con 'Ataque', 'Defensa', 'PS'):
+1. El valor máximo por barra es 15.
+2. Cada barra tiene 3 secciones iguales. Cada sección completamente llena = 5 puntos.
+3. Si la barra es de color ROJO/GRANATE por completo → valor exactamente 15.
+4. Si la barra es NARANJA: cuenta las secciones 100% llenas (×5) y estima la última sección parcial: ~20%→+1, ~40%→+2, ~60%→+3, ~80%→+4.
+IMPORTANTE: Cada barra tiene su PROPIO valor independiente. No copies valores entre barras.
 
-STEP 3 - stars: find the circular appraisal badge/medal. Count ONLY the SOLID FILLED gold stars (ignore hollow/grey stars). Return 0, 1, 2, or 3.
-
-Return a JSON object with keys: pokemon, cp, stars.`;
+Devuelve ÚNICAMENTE este JSON sin texto adicional:
+{"pokemon": "...", "cp": N, "stars": N, "atk_iv": N, "def_iv": N, "sta_iv": N}`;
 
 function extractJSON(txt) {
   const cleaned = txt
@@ -222,7 +229,7 @@ module.exports = async function handler(req, res) {
       : mode === "bar_single" ? PROMPT_BAR_SINGLE
       : mode === "weather" ? PROMPT_WEATHER
       : mode === "wild" ? PROMPT_WILD
-      : PROMPT;
+      : PROMPT; // appraisal or default: full combined prompt (pokemon+cp+stars+IVs)
 
     const geminiKeys = getKeys("GEMINI_API_KEY");
     const groqKeys = getKeys("GROQ_API_KEY");

@@ -458,28 +458,6 @@ function clearPoke(){
 // ═══ PHOTO SCAN ═══
 const BACKEND="https://pokerank-backend.vercel.app/api/scan";
 
-// Crop the bar panel (lower-left region) and return as base64 JPEG for Gemini
-function cropBarPanel(file){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      const img=new Image();
-      img.onload=()=>{
-        const sx=0, sy=Math.floor(img.height*0.58);
-        // Wider crop (65%) so empty bar sections are fully visible after the fill
-        const sw=Math.floor(img.width*0.65), sh=Math.floor(img.height*0.34);
-        // Scale up 3× so Gemini can clearly see fill boundaries
-        const canvas=document.createElement('canvas');
-        canvas.width=sw*3; canvas.height=sh*3;
-        canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw*3,sh*3);
-        resolve(canvas.toDataURL('image/jpeg',0.92).split(',')[1]);
-      };
-      img.onerror=reject; img.src=ev.target.result;
-    };
-    reader.onerror=reject; reader.readAsDataURL(file);
-  });
-}
-
 async function handlePhoto(input){
   const file=input.files[0];
   if(!file)return;
@@ -491,25 +469,17 @@ async function handlePhoto(input){
   loading.style.display='block';
 
   try{
-    // Compress full image for display + crop bar panel for IV reading
-    const [compressed, barCrop] = await Promise.all([
-      readAndCompress(file),
-      cropBarPanel(file)
-    ]);
+    const compressed=await readAndCompress(file);
     prev.src=compressed;
     prev.style.display='block';
     lbl.textContent=t('scan.change');
     const b64=compressed.split(',')[1];
-    const post=body=>fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 
-    // Two parallel Gemini calls: full image for name/cp/stars, cropped panel for IVs
-    const [res, barsRes] = await Promise.all([
-      post({image:b64, mediaType:'image/jpeg', mode:'appraisal'}),
-      post({image:barCrop, mediaType:'image/jpeg', mode:'bars'})
-    ]);
-
+    // Single call: full image, combined prompt reads pokemon+cp+stars+all IVs at once
+    const res=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:'image/jpeg',mode:'appraisal'})});
     const data=await res.json();
     if(!res.ok){const det=data.details?'\n'+data.details.join('\n'):'';throw new Error((typeof data.error==='string'?data.error:data.error?.message||JSON.stringify(data.error)||t('scan.err.server'))+det);}
+
     if(data.pokemon){
       const key=Object.keys(DB).find(k=>DB[k].n.toLowerCase().includes(data.pokemon.toLowerCase()));
       if(key)selectPoke(key);
@@ -520,12 +490,9 @@ async function handlePhoto(input){
       document.getElementById('stars-display').textContent=emojis[Number(data.stars)]||'';
       document.getElementById('stars-row').style.display='flex';
     }
-
-    // Apply IV bars from the focused crop call
-    const barsData=barsRes.ok ? await barsRes.json() : null;
-    if(barsData?.atk_iv!=null){ setSlider('atk',barsData.atk_iv); }
-    if(barsData?.def_iv!=null){ setSlider('def',barsData.def_iv); }
-    if(barsData?.sta_iv!=null){ setSlider('sta',barsData.sta_iv); }
+    if(data.atk_iv!=null) setSlider('atk',data.atk_iv);
+    if(data.def_iv!=null) setSlider('def',data.def_iv);
+    if(data.sta_iv!=null) setSlider('sta',data.sta_iv);
 
     setTimeout(evaluate,400);
   }catch(e){
