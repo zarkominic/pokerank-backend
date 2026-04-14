@@ -18,12 +18,19 @@ Look for a small WHITE circle with a KITE shape (diamond/rhombus with a tail poi
 
 Return ONLY this JSON: {"weather_boosted": true} if you see this white circle with a kite, or {"weather_boosted": false} if you do not see it.`;
 
-const PROMPT_BARS = `This is a zoomed crop of a Pokemon GO appraisal panel showing 3 horizontal IV bars.
-The bars appear top to bottom: Ataque/Attack, Defensa/Defense, PS/Stamina.
-Each bar fills left-to-right with orange/amber. Two gap marks split it into 3 equal thirds (each third = 5 IVs).
-Estimate each bar's fill level as an integer 0-15:
-  empty=0, 1st gap mark=5, 2nd gap mark=10, full=15.
-Return ONLY: {"atk_iv": N, "def_iv": N, "sta_iv": N}`;
+const PROMPT_BARS = `You are analyzing a cropped image of a Pokemon GO appraisal panel showing 3 horizontal IV bars labeled (top to bottom): Ataque/Attack, Defensa/Defense, PS/Stamina.
+
+Focus ONLY on the white panel in the lower-left containing those 3 bars. Ignore everything else.
+
+Rules:
+1. Each bar's maximum value is 15.
+2. Each bar is divided into 3 equal sections by small gap marks. Each section = 5 points.
+3. RULE FOR RED: If a bar is entirely dark red/crimson color, its value is exactly 15.
+4. RULE FOR ORANGE: If a bar is orange, count fully filled sections (×5), then estimate the partial last section: ~20% filled=1pt, ~40%=2pt, ~60%=3pt, ~80%=4pt.
+5. Examine each bar INDEPENDENTLY — they will have different values.
+
+Return ONLY valid JSON, no extra text:
+{"atk_iv": <0-15>, "def_iv": <0-15>, "sta_iv": <0-15>}`;
 
 const PROMPT_WILD = `Analyze this Pokemon GO screenshot showing a wild Pokemon encounter screen.
 

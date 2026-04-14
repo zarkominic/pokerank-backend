@@ -546,8 +546,8 @@ async function handleCatchPhoto(input){
 
 
 // Analyze IV bars via pixel detection — no AI needed.
-// Crops the IV panel (left 52%, y 62-90%), finds 3 orange bar regions dynamically,
-// measures each bar's fill by locating the rightmost orange pixel.
+// Orange fill = IVs ≤ 10.  Red/dark-red fill = IVs > 10 (up to 15).
+// Uses column majority vote to avoid JPEG artifact false positives.
 // Returns [atkIV, defIV, staIV] each 0-15.
 function analyzeIVBars(file){
   return new Promise((resolve,reject)=>{
@@ -562,26 +562,32 @@ function analyzeIVBars(file){
         canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
         const px=canvas.getContext('2d').getImageData(0,0,sw,sh).data;
 
-        // Orange bar fill: r dominates strongly over g and especially b
-        // Grey empty section: r≈g≈b, so ratios fail
-        const isOrange=(r,g,b)=>r>120 && r>g*1.25 && r>b*2.0;
+        // Orange (IVs ≤ 10): r high, g medium, b low  → r>g*1.1 && r>b*1.8
+        // Red   (IVs > 10): r high, g very low, b low → r>g*2.0 && r>b*2.0
+        // Grey  (empty):    r≈g≈b                    → all ratios fail
+        const isFill=(r,g,b)=>r>110 && (
+          (r>g*1.1 && r>b*1.8) ||   // orange
+          (r>g*2.0 && r>b*2.0)       // red
+        );
+        // Shortcut: if a bar region is predominantly red → IV is 15
+        const isRed=(r,g,b)=>r>110 && r>g*2.0 && r>b*2.0 && g<100;
 
-        // Skip first 22% of width (label text area: "Ataque", "Defensa", "PS")
+        // Skip first 22% of width (label text: "Ataque", "Defensa", "PS")
         const xStart=Math.floor(sw*0.22);
         const barW=sw-xStart;
 
-        // Compute per-row orange density (fraction of orange pixels in bar area)
+        // Per-row fill density to locate the 3 bar bands
         const density=new Float32Array(sh);
         for(let y=0;y<sh;y++){
           let cnt=0;
           for(let x=xStart;x<sw;x++){
             const i=(y*sw+x)*4;
-            if(isOrange(px[i],px[i+1],px[i+2]))cnt++;
+            if(isFill(px[i],px[i+1],px[i+2]))cnt++;
           }
           density[y]=cnt/barW;
         }
 
-        // Find contiguous row bands where density > 8% → bar regions
+        // Find contiguous row bands with density > 8%
         const THRESH=0.08;
         const regions=[];
         let s=-1;
@@ -591,21 +597,37 @@ function analyzeIVBars(file){
         }
         if(s>=0) regions.push([s,sh-1]);
 
-        // Keep 3 tallest regions, sorted top-to-bottom (ATK, DEF, STA)
+        // Take 3 tallest regions sorted top-to-bottom (ATK, DEF, STA)
         regions.sort((a,b)=>(b[1]-b[0])-(a[1]-a[0]));
         const bars=regions.slice(0,3).sort((a,b)=>a[0]-b[0]);
 
-        // For each bar region: rightmost orange x → fill fraction → IV 0-15
         const ivs=bars.map(([y0,y1])=>{
-          let rightmost=-1;
+          const barH=y1-y0+1;
+
+          // Count red vs orange pixels to know which color dominates
+          let redCnt=0, fillCnt=0;
           for(let y=y0;y<=y1;y++){
             for(let x=xStart;x<sw;x++){
               const i=(y*sw+x)*4;
-              if(isOrange(px[i],px[i+1],px[i+2]) && x>rightmost) rightmost=x;
+              const r=px[i],g=px[i+1],b=px[i+2];
+              if(isFill(r,g,b)){fillCnt++; if(isRed(r,g,b)) redCnt++;}
             }
           }
-          if(rightmost<0) return 0;
-          return Math.min(15,Math.round(((rightmost-xStart)/barW)*15));
+          // If >60% of filled pixels are red → bar is fully at max = 15
+          if(fillCnt>0 && redCnt/fillCnt>0.60) return 15;
+
+          // Otherwise measure fill by rightmost column with >50% filled rows
+          let rightFilled=-1;
+          for(let x=xStart;x<sw;x++){
+            let cnt=0;
+            for(let y=y0;y<=y1;y++){
+              const i=(y*sw+x)*4;
+              if(isFill(px[i],px[i+1],px[i+2]))cnt++;
+            }
+            if(cnt/barH>0.50) rightFilled=x;
+          }
+          if(rightFilled<0) return 0;
+          return Math.min(15,Math.round(((rightFilled-xStart)/barW)*15));
         });
         while(ivs.length<3) ivs.push(0);
         resolve(ivs);
